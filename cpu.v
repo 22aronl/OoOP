@@ -126,8 +126,7 @@ module main();
     // ALU Queue //
     // // //
 
-    // Ready Bit, Instruction, ReadyA, ROBInstructA, ValueA, ReadyB, ROBInstructB, [15:0]ValueB
-    reg 
+
 
 
     always @(posedge clk) begin
