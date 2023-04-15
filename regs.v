@@ -1,24 +1,24 @@
 `timescale 1ps/1ps
 
 module regs(input clk,
-    input [3:0]raddr0_, output [15:0]rdata0,
-    input [3:0]raddr1_, output [15:0]rdata1,
-    input [3:0]raddr2_, output [15:0]rdata2,
-    input [3:0]raddr3_, output [15:0]rdata3,
-    input [3:0]raddr4_, output [15:0]rdata4,
-    input [3:0]raddr5_, output [15:0]rdata5,
-    input wen0, input [3:0]waddr0, input [15:0]wdata0,
-    input wen1, input [3:0]waddr1, input [15:0]wdata1,
-    input wen2, input [3:0]waddr2, input [15:0]wdata2);
+    input [2:0]raddr0_, output [15:0]rdata0,
+    input [2:0]raddr1_, output [15:0]rdata1,
+    input [2:0]raddr2_, output [15:0]rdata2,
+    input [2:0]raddr3_, output [15:0]rdata3,
+    input [2:0]raddr4_, output [15:0]rdata4,
+    input [2:0]raddr5_, output [15:0]rdata5,
+    input wen0, input [2:0]waddr0, input [15:0]wdata0,
+    input wen1, input [2:0]waddr1, input [15:0]wdata1,
+    input wen2, input [2:0]waddr2, input [15:0]wdata2);
 
-    reg [15:0]data[0:15];
+    reg [15:0]data[0:7];
 
-    reg [3:0]raddr0;
-    reg [3:0]raddr1;
-    reg [3:0]raddr2;
-    reg [3:0]raddr3;
-    reg [3:0]raddr4;
-    reg [3:0]raddr5;
+    reg [2:0]raddr0;
+    reg [2:0]raddr1;
+    reg [2:0]raddr2;
+    reg [2:0]raddr3;
+    reg [2:0]raddr4;
+    reg [2:0]raddr5;
 
     assign rdata0 = data[raddr0];
     assign rdata1 = data[raddr1];

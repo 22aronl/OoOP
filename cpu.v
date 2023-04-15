@@ -32,6 +32,7 @@ module main();
 
     //TODO: Update to accomodate for branch prediction
     //TODO: Actually bother implementing instruction cache
+    //TODO: Also implement instruction buffer
     //TODO: Those tasks may be interrelated
 
     mem mem(
@@ -89,6 +90,44 @@ module main();
         d1_pcC <= pcC;
         d1_pcD <= pcD;
     end
+
+
+    // // // // //
+    //    ROB  //
+    // // // // //
+
+    //Ready Bit, Value, PC (for piping into cache & branch checking for now)
+    reg [32:0]ROB[0:63];
+    reg [5:0] ROBhead = 5'h00;
+    reg [5:0] ROBtail = 5'h00;
+    reg [5:0] ROBsize = 5'h00;
+
+    always @(posedge clk) begin
+        //TODO: Implement ROB
+    end
+
+    // // //
+    // Forwarding BUS
+    // // //
+
+    // [22] Valid Bit [21:16] Rob instruction [15:0] Rob Value
+    wire [22:0] forwardA;
+    wire [22:0] forwardB;
+    wire [22:0] forwardC;
+    wire [22:0] forwardD;
+
+
+    // // // // // // // //
+    // Instruction Queues //
+    // // // // // // // //
+
+
+    // // //
+    // ALU Queue //
+    // // //
+
+    // Ready Bit, Instruction, ReadyA, ROBInstructA, ValueA, ReadyB, ROBInstructB, [15:0]ValueB
+    reg 
 
 
     always @(posedge clk) begin
