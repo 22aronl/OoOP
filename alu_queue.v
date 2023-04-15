@@ -28,22 +28,20 @@ module alu_queue(
 
     initial begin
         for(i = 0; i < QUEUE_SIZE; i = i + 1)
-            valid[i] = 1'b0;
+            valid[i] <= 1'b0;
     end
 
-    always @(posedge clk) begin
-        inserted = 1'b0;
-        for(i = 0; i < QUEUE_SIZE; i = i + 1) begin
-            if(inserted == 1'b0 && valid[i] == 1 && ready[i] == 1) begin
-                outOperation0 = operation[i];
-                outROB0 = rob_num[i];
-                outValue0A = valueA[i];
-                outValue0B = valueB[i];
-                outReady0 = 1;
-                valid[i] = 1'b0;
-                inserted = 1'b1;
-            end
-        end
-    end
+    // always @(posedge clk) begin
+    //     for(i = 0; i < QUEUE_SIZE; i = i + 1) begin
+    //         if(valid[i] == 1 && ready[i] == 1) begin
+    //             outOperation0 <= operation[i];
+    //             outROB0 <= rob_num[i];
+    //             outValue0A <= valueA[i];
+    //             outValue0B <= valueB[i];
+    //             outReady0 <= 1'b1;
+    //             valid[i] <= 1'b0;
+    //         end
+    //     end
+    // end
 
 endmodule
