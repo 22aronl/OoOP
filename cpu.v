@@ -102,33 +102,35 @@ module main();
 
     wire [3:0] opcodeA = instructA[15:12];
     wire writeToRegA = (opcodeA == 4'b0001) | (opcodeA == 4'b0101) | (opcodeA == 4'b0010) | (opcodeA == 4'b1010) |
-                            (opcodeA == 4'b0110) | (opcodeA == 4'b1110) | (opcodeA == 4'1001);
-    wire [2:0] writeRegA = [11:9];
+                            (opcodeA == 4'b0110) | (opcodeA == 4'b1110) | (opcodeA == 4'b1001);
+    wire [2:0] writeRegA = instructA[11:9];
     wire [2:0] regA0 = instructA[8:6];
     wire [2:0] regA1 = instructA[2:0];
 
     wire [3:0] opcodeB = instructB[15:12];
     wire writeToRegB = (opcodeB == 4'b0001) | (opcodeB == 4'b0101) | (opcodeB == 4'b0010) | (opcodeB == 4'b1010) |
-                            (opcodeB == 4'b0110) | (opcodeB == 4'b1110) | (opcodeB == 4'1001);
-    wire [2:0] writeRegB = [11:9];
+                            (opcodeB == 4'b0110) | (opcodeB == 4'b1110) | (opcodeB == 4'b1001);
+    wire [2:0] writeRegB = instructB[11:9];
     wire [2:0] regB0 = instructB[8:6];
     wire [2:0] regB1 = instructB[2:0];
 
     wire [3:0] opcodeC = instructC[15:12];
     wire writeToRegC = (opcodeC == 4'b0001) | (opcodeC == 4'b0101) | (opcodeC == 4'b0010) | (opcodeC == 4'b1010) |
-                            (opcodeC == 4'b0110) | (opcodeC == 4'b1110) | (opcodeC == 4'1001);
-    wire [2:0] writeRegC = [11:9];
+                            (opcodeC == 4'b0110) | (opcodeC == 4'b1110) | (opcodeC == 4'b1001);
+    wire [2:0] writeRegC = instructC[11:9];
     wire [2:0] regC0 = instructC[8:6];
     wire [2:0] regC1 = instructC[2:0];
 
     wire [3:0] opcodeD = instructD[15:12];
     wire writeToRegD = (opcodeD == 4'b0001) | (opcodeD == 4'b0101) | (opcodeD == 4'b0010) | (opcodeD == 4'b1010) |
-                            (opcodeD == 4'b0110) | (opcodeD == 4'b1110) | (opcodeD == 4'1001);
-    wire [2:0] writeRegD = [11:9];
+                            (opcodeD == 4'b0110) | (opcodeD == 4'b1110) | (opcodeD == 4'b1001);
+    wire [2:0] writeRegD = instructD[11:9];
     wire [2:0] regD0 = instructD[8:6];
     wire [2:0] regD1 = instructD[2:0];
 
     assign raddr = {regA0, regA1, regB0, regB1, regC0, regC1, regD0, regD1};
+
+    //TODO: Fix the register dependency checking (simulatenous dependency issues)
 
     always @(posedge clk) begin
         d1_pcA <= pcA;
@@ -137,13 +139,16 @@ module main();
         d1_pcD <= pcD;
     end
 
+    //TODO: Store Instructions into buffer to be put into the reservation stations
 
     // // // // //
     //    ROB  //
     // // // // //
 
+
+    //TODO: Add support for the condition registers
     //Ready Bit, Value, PC (for piping into cache & branch checking for now)
-    reg [32:0]ROB[0:63];
+    reg [32:0] ROB[0:63];
     reg [5:0] ROBhead = 5'h00;
     reg [5:0] ROBtail = 5'h00;
     reg [5:0] ROBsize = 5'h00;
@@ -153,6 +158,29 @@ module main();
         ROB[d1_tailB][15:0] <= pcB;
         ROB[d1_tailC][15:0] <= pcC;
         ROB[d1_tailD][15:0] <= pcD;
+        ROBtail <= (ROBtail + 4) % 64;
+    end
+
+    always @(posedge clk) begin
+        if(forwardA[22] == 1'b1) begin
+            ROB[forwardA[21:16]][31:16] <= forwardA[15:0];
+            ROB[forwardA[21:16]][0] <= 1'b1;
+        end
+
+        if(forwardB[22] == 1'b1) begin
+            ROB[forwardB[21:16]][31:16] <= forwardB[15:0];
+            ROB[forwardB[21:16]][0] <= 1'b1;
+        end
+
+        if(forwardC[22] == 1'b1) begin
+            ROB[forwardC[21:16]][31:16] <= forwardC[15:0];
+            ROB[forwardC[21:16]][0] <= 1'b1;
+        end
+
+        if(forwardD[22] == 1'b1) begin
+            ROB[forwardD[21:16]][31:16] <= forwardD[15:0];
+            ROB[forwardD[21:16]][0] <= 1'b1;
+        end
     end
 
     // // //
@@ -176,7 +204,57 @@ module main();
     // // //
 
 
+    //Fix Wiring
+    alu_queue alu_queue();
 
+    // TODO : Insruction Queues
+
+
+    // // // // // // // //
+    //  Functional Units //
+    // // // // // // // //
+
+    // ALU 1 : uses forwardA
+    // 0 is add, 1 is and, 2 is Not
+    wire [3:0] alu_opcode0;
+    wire [5:0] alu_rob0;
+    wire [15:0] alu_value0A;
+    wire [15:0] alu_value0B;
+    reg alu_valid0 = 1'b0;
+
+    wire [15:0] alu_out0 = (alu_opcode0 == 4'b0000) ? alu_value0A + alu_value0B :
+                            (alu_opcode0 == 4'b0001) ? alu_value0A & alu_value0B :
+                            ~alu_value0A;
+    assign forwardA = {alu_valid0, alu_rob0, alu_out0};
+
+    always @(posedge clk) begin
+        //TODO: link functional unit A to instruction queue
+    end
+
+    // ALU 2: uses forwardB
+    wire [3:0] alu_opcode1;
+    wire [5:0] alu_rob1;
+    wire [15:0] alu_value1A;
+    wire [15:0] alu_value1B;
+    reg alu_valid1 = 1'b0;
+
+    wire [15:0] alu_out1 = (alu_opcode1 == 4'b0000) ? alu_value1A + alu_value1B :
+                            (alu_opcode1 == 4'b0001) ? alu_value1A & alu_value1B :
+                            ~alu_value1A;
+
+    assign forwardB = {alu_valid1, alu_rob1, alu_out1};
+
+    always @(posedge clk) begin
+        //TODO: link functional unit B to instruction queue
+    end
+
+    // Branch Unit: uses forwardC
+
+    //TODO: Add Branch Unit
+
+
+    // Load Store Unit: uses forwardD
+    //TODO: Add Load Store Unit
 
     always @(posedge clk) begin
         if(pc > 100)
