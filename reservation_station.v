@@ -17,7 +17,7 @@ module reservation_station(input clk,
                                 operation[2][1:0] == 2'b00 ? 3'b010 :
                                 operation[3][1:0] == 2'b00 ? 3'b011 :
                                 operation[4][1:0] == 2'b00 ? 3'b100 : 3'b111;
-    assign outOperation = {operation[operationIndex][55:52], operation[operationIndex][51:46], operation[operationIndex][45:40], operation[operationIndex][39:34], operation[operationIndex][33:18], operation[operationIndex][17:2]};
+    assign outOperation = {operation[operationIndex][55:52], operation[operationIndex][51:46], operation[operationIndex][33:18], operation[operationIndex][17:2]};
 
     always @(posedge clk) begin
         if(operationUsed) begin

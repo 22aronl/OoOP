@@ -204,14 +204,45 @@ module main();
     // // //
 
     //TODO: Fix Wiring
+
+    wire alu_queue_used_0;
+    wire alu_queue_used_1;
+    wire [1:0] alu_queue_used = {alu_queue_used_0 & alu_queue_used_1, alu_queue_used_0 ^ alu_queue_used_1};
     wire [56:0] alu_queue_out0;
     wire [56:0] alu_queue_out1;
-    queue alu_queue();
 
-    reservation_station alu_rs0();
-    reservation_station alu_rs1();
+    queue alu_queue(
+        .clk(clk),
+        .flush(),
+        .taken(alu_queue_used),
+        .forwardA(forwardA), .forwardB(forwardB), .forwardC(forwardC), .forwardD(forwardD),
+        .inOperation0(), .inROB0(), .inLook0A(), .inLook0B(), .inUse0(), .inReady0(),
+        .inOperation1(), .inROB1(), .inLook1A(), .inLook1B(), .inUse1(), .inReady1(),
+        .inOperation2(), .inROB2(), .inLook2A(), .inLook2B(), .inUse2(), .inReady2(),
+        .inOperation3(), .inROB3(), .inLook3A(), .inLook3B(), .inUse3(), .inReady3(),
+        .outOperation0(alu_queue_out0),
+        .outOperation1(alu_queue_out1)
+    );
 
+    wire [40:0] alu_rs_0_out;
+    wire alu_rs_0_valid;
+    reservation_station alu_rs0(
+        .clk(clk),
+        .forwardA(forwardA), .forwardB(forwardB), .forwardC(forwardC), .forwardD(forwardD),
+        .inOperation(alu_queue_out0), .operationUsed(alu_queue_used_0),
+        .outOperation(alu_rs_0_out), .outOperationValid(alu_rs_0_valid)
+    );
 
+    wire [40:0] alu_rs_1_out;
+    wire alu_rs_1_valid;
+    reservation_station alu_rs1(
+        .clk(clk),
+        .forwardA(forwardA), .forwardB(forwardB), .forwardC(forwardC), .forwardD(forwardD),
+        .inOperation(alu_queue_out1), .operationUsed(alu_queue_used_1),
+        .outOperation(alu_rs_1_out), .outOperationValid(alu_rs_1_valid)
+    );
+
+    
 
     // TODO : Insruction Queues
 
@@ -222,10 +253,10 @@ module main();
 
     // ALU 1 : uses forwardA
     // 0 is add, 1 is and, 2 is Not
-    wire [3:0] alu_opcode0;
-    wire [5:0] alu_rob0;
-    wire [15:0] alu_value0A;
-    wire [15:0] alu_value0B;
+    reg [3:0] alu_opcode0;
+    reg [5:0] alu_rob0;
+    reg [15:0] alu_value0A;
+    reg [15:0] alu_value0B;
     reg alu_valid0 = 1'b0;
 
     wire [15:0] alu_out0 = (alu_opcode0 == 4'b0000) ? alu_value0A + alu_value0B :
@@ -235,13 +266,18 @@ module main();
 
     always @(posedge clk) begin
         //TODO: link functional unit A to instruction queue
+        alu_valid0 <= alu_rs_0_valid;
+        alu_opcode0 <= alu_rs_0_out[40:37];
+        alu_rob0 <= alu_rs_0_out[36:32];
+        alu_value0A <= alu_rs_0_out[31:16];
+        alu_value0B <= alu_rs_0_out[15:0];
     end
 
     // ALU 2: uses forwardB
-    wire [3:0] alu_opcode1;
-    wire [5:0] alu_rob1;
-    wire [15:0] alu_value1A;
-    wire [15:0] alu_value1B;
+    reg [3:0] alu_opcode1;
+    reg [5:0] alu_rob1;
+    reg [15:0] alu_value1A;
+    reg [15:0] alu_value1B;
     reg alu_valid1 = 1'b0;
 
     wire [15:0] alu_out1 = (alu_opcode1 == 4'b0000) ? alu_value1A + alu_value1B :
@@ -251,7 +287,11 @@ module main();
     assign forwardB = {alu_valid1, alu_rob1, alu_out1};
 
     always @(posedge clk) begin
-        //TODO: link functional unit B to instruction queue
+        alu_valid1 <= alu_rs_1_valid;
+        alu_opcode1 <= alu_rs_1_out[40:37];
+        alu_rob1 <= alu_rs_1_out[36:32];
+        alu_value1A <= alu_rs_1_out[31:16];
+        alu_value1B <= alu_rs_1_out[15:0];
     end
 
     // Branch Unit: uses forwardC
