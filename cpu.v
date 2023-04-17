@@ -59,7 +59,7 @@ module main();
 
     //Negative, Zero, Positive
     // [7] valid [6] condition code, [5:0] ROB index
-    reg [7:0] conditionCodes[0:2];
+    // reg [7:0] conditionCodes[0:2];
 
     regs regs(
         .clk(clk),
@@ -142,7 +142,7 @@ module main();
     //TODO: Store Instructions into buffer to be put into the reservation stations
 
     // // // // //
-    //    ROB  //
+    //    ROB   //
     // // // // //
 
 
@@ -164,22 +164,22 @@ module main();
     always @(posedge clk) begin
         if(forwardA[22] == 1'b1) begin
             ROB[forwardA[21:16]][31:16] <= forwardA[15:0];
-            ROB[forwardA[21:16]][0] <= 1'b1;
+            ROB[forwardA[21:16]][32] <= 1'b1;
         end
 
         if(forwardB[22] == 1'b1) begin
             ROB[forwardB[21:16]][31:16] <= forwardB[15:0];
-            ROB[forwardB[21:16]][0] <= 1'b1;
+            ROB[forwardB[21:16]][32] <= 1'b1;
         end
 
         if(forwardC[22] == 1'b1) begin
             ROB[forwardC[21:16]][31:16] <= forwardC[15:0];
-            ROB[forwardC[21:16]][0] <= 1'b1;
+            ROB[forwardC[21:16]][32] <= 1'b1;
         end
 
         if(forwardD[22] == 1'b1) begin
             ROB[forwardD[21:16]][31:16] <= forwardD[15:0];
-            ROB[forwardD[21:16]][0] <= 1'b1;
+            ROB[forwardD[21:16]][32] <= 1'b1;
         end
     end
 
@@ -187,11 +187,11 @@ module main();
     // Forwarding BUS
     // // //
 
-    // [22] Valid Bit [21:16] Rob instruction [15:0] Rob Value
-    wire [22:0] forwardA;
-    wire [22:0] forwardB;
-    wire [22:0] forwardC;
-    wire [22:0] forwardD;
+    // [25:23] Condition flags [22] Valid Bit [21:16] Rob instruction [15:0] Rob Value
+    wire [25:0] forwardA;
+    wire [25:0] forwardB;
+    wire [25:0] forwardC;
+    wire [25:0] forwardD;
 
 
     // // // // // // // //
@@ -259,9 +259,13 @@ module main();
     reg [15:0] alu_value0B;
     reg alu_valid0 = 1'b0;
 
-    wire [15:0] alu_out0 = (alu_opcode0 == 4'b0000) ? alu_value0A + alu_value0B :
-                            (alu_opcode0 == 4'b0001) ? alu_value0A & alu_value0B :
-                            ~alu_value0A;
+    wire alu_unknown0 = ~((alu_opcode0 == 4'b0000) || (alu_opcode0 == 4'b0101) || (alu_opcode0 == 4'b1001));
+
+    wire [15:0] alu_out0 = (alu_opcode0 == 4'b0000) ? alu_value0A + alu_value0B :           // ADD
+                            (alu_opcode0 == 4'b0101) ? alu_value0A[4] & alu_value0B[4] :    // AND (based on bit 5)
+                            (alu_opcode0 == 4'b1001) ? ~alu_value0A :                       // NOT
+                            0;
+    wire [2:0] alu_condition_code0 = (alu_opcode0 == 4'b0001) | (alu_opcode0 == 4'b0101) | 
     assign forwardA = {alu_valid0, alu_rob0, alu_out0};
 
     always @(posedge clk) begin
@@ -280,9 +284,12 @@ module main();
     reg [15:0] alu_value1B;
     reg alu_valid1 = 1'b0;
 
-    wire [15:0] alu_out1 = (alu_opcode1 == 4'b0000) ? alu_value1A + alu_value1B :
-                            (alu_opcode1 == 4'b0001) ? alu_value1A & alu_value1B :
-                            ~alu_value1A;
+    wire alu_unknown1 = ~((alu_opcode0 == 4'b0000) || (alu_opcode0 == 4'b0101) || (alu_opcode0 == 4'b1001));
+
+    wire [15:0] alu_out1 = (alu_opcode1 == 4'b0000) ? alu_value1A + alu_value1B :            // ADD
+                            (alu_opcode1 == 4'b0101) ? alu_value1A[4] & alu_value1B[4] :    // AND (based on bit 5)
+                            (alu_opcode1 == 4'b1001) ? ~alu_value1A :                       // NOT
+                            0;
 
     assign forwardB = {alu_valid1, alu_rob1, alu_out1};
 
@@ -294,9 +301,24 @@ module main();
         alu_value1B <= alu_rs_1_out[15:0];
     end
 
-    // Branch Unit: uses forwardC
 
-    //TODO: Add Branch Unit
+
+    // Branch Unit: uses forwardC
+    reg [3:0] bu_opcode;
+    reg [5:0] bu_rob0;
+    reg [15:0] bu_value0B;
+    reg [15:0] bu_pc;
+    reg alu_valid0 = 1'b0;
+    
+    
+
+    wire [15:0]target = (bu_opcode == 4'b1100) ? bu_baser :
+                        (bu_opcode == 4'b0100) ?
+                            (ins[11] == 0) ? bu_baser :
+                            (pc + 8) + {5{ins[10]}, {ins[10:0]}} :
+                        0;
+                            
+    wire [15:0]bu_r7 = pc + 8;
 
 
     // Load Store Unit: uses forwardD
