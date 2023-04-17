@@ -203,9 +203,15 @@ module main();
     // ALU Queue //
     // // //
 
+    //TODO: Fix Wiring
+    wire [56:0] alu_queue_out0;
+    wire [56:0] alu_queue_out1;
+    queue alu_queue();
 
-    //Fix Wiring
-    alu_queue alu_queue();
+    reservation_station alu_rs0();
+    reservation_station alu_rs1();
+
+
 
     // TODO : Insruction Queues
 
