@@ -4,9 +4,15 @@ module load_store_unit(
     input is_ld, input [15:0] data, input [15:0] location, input [5:0] ROBloc, input input_valid,
     output [15:0] commit_data, output [15:0] commit_location, output commit_valid,
     output [15:0] mem_location, output mem_valid,
+    input [15:0] mem_data,
     output [15:0] out_data, output [5:0] out_ROB, output out_valid,
     output load_stall //stall receiving more load units
 );
+    assign load_stall = store_buffer_stall;
+    assign out_ROB = load_store[head][5:0];
+    assign out_data = load_store_data[16] ? load_store_data[head][15:0] : mem_data;
+    assign out_valid = load_store[head][6];
+
     //Timing of Load_WAIt might be wrong
     parameter LOAD_WAIT = 3;
     parameter LOAD_SIZE = 8;

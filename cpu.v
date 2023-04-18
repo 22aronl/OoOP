@@ -35,6 +35,12 @@ module main();
     //TODO: Also implement instruction buffer
     //TODO: Those tasks may be interrelated
 
+    wire mem_wen;
+    wire [15:0] mem_waddr;
+    wire [15:0] mem_wdata;
+    wire [15:0] mem_raddr;
+    wire [15:0] mem_rdata;
+
     mem mem(
         .clk(clk),
         .rinstruct0_(pcA[15:1]),
@@ -45,13 +51,13 @@ module main();
         .routput1_(instructB),
         .routput2_(instructC),
         .routput3_(instructD),
-        .raddr0_(),
+        .raddr0_(mem_raddr),
         .raddr1_(),
-        .rdata0_(),
+        .rdata0_(mem_rdata),
         .rdata1_(),
-        .wen0(),
-        .waddr0(),
-        .wdata0()
+        .wen0(mem_wen),
+        .waddr0(mem_waddr[15:1]),
+        .wdata0(mem_wdata)
     );
 
     wire [23:0] raddr;
@@ -372,9 +378,37 @@ module main();
     end
 
     // Load Store Unit: uses forwardD
-    //TODO: Add Load Store Unit
+    wire [56:0] lsu_out;
+    queue lsu_queue(
+        .clk(clk),
+        .flush(),
+        .taken({1'b0, !load_stall}),
+        .forwardA(forwardA), .forwardB(forwardB), .forwardC(forwardC), .forwardD(forwardD),
+        .inOperation0(), .inROB0(), .inLook0A(), .inLook0B(), .inUse0(), .inReady0(),
+        .inOperation1(), .inROB1(), .inLook1A(), .inLook1B(), .inUse1(), .inReady1(),
+        .inOperation2(), .inROB2(), .inLook2A(), .inLook2B(), .inUse2(), .inReady2(),
+        .inOperation3(), .inROB3(), .inLook3A(), .inLook3B(), .inUse3(), .inReady3(),
+        .outOperation0(lsu_out),
+        .outOperation1()
+    );
+    wire load_stall;
+    wire [15:0] lsu_data;
+    wire [5:0] lsu_rob;
+    wire lsu_out_valid;
 
-    load_store_unit lsu();
+    load_store_unit lsu(
+        .clk(clk),
+        .flush(),
+        .stores_to_commit(),
+        .is_ld(), .data(), .location(), .ROBloc(), .input_valid(),
+        .commit_data(mem_wdata), .commit_location(mem_waddr), .commit_valid(mem_wen),
+        .mem_location(mem_raddr), .mem_valid(),
+        .mem_data(mem_rdata),
+        .out_data(lsu_data), .out_ROB(lsu_rob), .out_valid(lsu_out_valid),
+        .load_stall(load_stall);
+    );
+
+    assign forwardD = {lsu_out_valid, lsu_rob, lsu_data};
 
     always @(posedge clk) begin
         if(pc > 100)
