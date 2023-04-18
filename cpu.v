@@ -328,20 +328,28 @@ module main();
 
     // Branch Unit: uses forwardC
     reg [3:0] bu_opcode;
-    reg [5:0] bu_rob0;
-    reg [15:0] bu_value0B;
+    reg [5:0] bu_rob;
+    reg [15:0] bu_value;
+    reg [15:0] bu_pcoffset11;
+    reg bu_rflag;
     reg [15:0] bu_pc;
     reg alu_valid0 = 1'b0;
     
-    
+    wire is_jmp = (bu_opcode == 4'b1100);
+    wire is_jsr = (bu_opcode == 4'b0100);
+    wire is_br = (bu_opcode == 4'b0000);
 
-    wire [15:0]target = (bu_opcode == 4'b1100) ? bu_baser :
-                        (bu_opcode == 4'b0100) ?
-                            (ins[11] == 0) ? bu_baser :
-                            (pc + 8) + {5{ins[10]}, {ins[10:0]}} :
-                        0;
+    wire [15:0]target = is_jmp ? bu_value :
+                        is_jsr ?
+                            (bu_rflag === 0) ? bu_value :
+                            (bu_pc + 8) + {5{bu_pcoffset11[10]}, {bu_pcoffset11[10:0]}} :
+                        (bu_pc + 8) + {5{bu_pcoffset11[10]}, {bu_pcoffset11[10:0]}};
                             
-    wire [15:0]bu_r7 = pc + 8;
+    wire [15:0]bu_r7 = bu_pc + 8;
+
+    wire bu_jmp = is_jmp ||
+                is_jsr ||
+                (is_br && ((bu_n && N) || (bu_z && Z) || (bu_p && P)));
 
 
     // Load Store Unit: uses forwardD
