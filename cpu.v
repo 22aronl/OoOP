@@ -58,7 +58,7 @@ module main();
     wire [183:0] rdata;
 
     //Negative, Zero, Positive
-    // [9] valid [8:6] condition code, [5:0] ROB index
+    // [9:7] flags, [6] busy, [5:0] ROB index
     reg [9:0] conditionCode;
     // reg [7:0] conditionCodes[0:2];
 
@@ -244,9 +244,35 @@ module main();
     );
 
     
+    //////////////
+    // BU QUEUE //
+    //////////////
 
-    // TODO : Insruction Queues
+    wire buq_used;
+    wire [56:0] buq_out;
 
+    queue bu_queue(
+        .clk(clk),
+        .flush(),
+        .taken(buq_used),
+        .forwardA(forwardA), .forwardB(forwardB), .forwardC(forwardC), .forwardD(forwardD),
+        .inOperation0(), .inROB0(), .inLook0A(), .inLook0B(), .inUse0(), .inReady0(),
+        .inOperation1(), .inROB1(), .inLook1A(), .inLook1B(), .inUse1(), .inReady1(),
+        .inOperation2(), .inROB2(), .inLook2A(), .inLook2B(), .inUse2(), .inReady2(),
+        .inOperation3(), .inROB3(), .inLook3A(), .inLook3B(), .inUse3(), .inReady3(),
+        .outOperation0(buq_out),
+        .outOperation1()
+    );
+
+
+    wire [40:0] bu_rs_out;
+    wire bu_rs_valid;
+    reservation_station bu_rs(
+        .clk(clk),
+        .forwardA(forwardA), .forwardB(forwardB), .forwardC(forwardC), .forwardD(forwardD),
+        .inOperation(buq_out), .operationUsed(buq_used),
+        .outOperation(bu_rs_out), .outOperationValid(bu_rs_valid)
+    );
 
     // // // // // // // //
     //  Functional Units //
@@ -267,8 +293,6 @@ module main();
                             (alu_opcode0 == 4'b1001) ? ~alu_value0A :                       // NOT
     
     // NZP
-    wire [2:0] alu_condition_code0 = (alu_opcode0 == 4'b0001) | (alu_opcode0 == 4'b0101) | (alu_opcode0 == 4'b1001) ? {alu_out0[15], alu_out0===0, ~alu_out0[15]}
-    
     assign forwardA = {alu_valid0, alu_rob0, alu_out0};
 
     always @(posedge clk) begin
@@ -285,7 +309,7 @@ module main();
             //& alu_rob0 > load store unit rob
             //& alu_rob0 > branch unit rob
             begin
-                conditionCode <= {1, {alu_out0[15], alu_out0===0, ~alu_out0[15]}, alu_rob0};
+                conditionCode <= {1, {alu_out0[15], alu_out0 ==== 0, ~alu_out0[15]}, alu_rob0};
             end
     end
 
@@ -303,7 +327,6 @@ module main();
                             (alu_opcode1 == 4'b1001) ? ~alu_value1A :                       // NOT
                             0;
     // NZP
-    wire [2:0] alu_condition_code1 = (alu_opcode1 == 4'b0001) | (alu_opcode1 == 4'b0101) | (alu_opcode1 == 4'b1001) ? {alu_out1[15], alu_out1===0, ~alu_out1[15]}
     assign forwardB = {alu_valid1, alu_rob1, alu_out1};
 
     always @(posedge clk) begin
@@ -312,15 +335,6 @@ module main();
         alu_rob1 <= alu_rs_1_out[36:32];
         alu_value1A <= alu_rs_1_out[31:16];
         alu_value1B <= alu_rs_1_out[15:0];
-        if ((alu_opcode1 == 4'b0001) | (alu_opcode1 == 4'b0101) | (alu_opcode1 == 4'b1001))
-            & alu_rob1 > conditionCode[5:0]
-            & alu_rob1 > alu_rob1
-            & alu_valid1
-            //& alu_rob0 > load store unit rob
-            //& alu_rob0 > branch unit rob
-            begin
-                conditionCode <= {1, {alu_out1[15], alu_out1===0, ~alu_out1[15]}, alu_rob1};
-            end
 
     end
 
@@ -343,21 +357,28 @@ module main();
                         is_jsr ?
                             (bu_rflag === 0) ? bu_value :
                             (bu_pc + 8) + {5{bu_pcoffset11[10]}, {bu_pcoffset11[10:0]}} :
-                        (bu_pc + 8) + {5{bu_pcoffset11[10]}, {bu_pcoffset11[10:0]}};
+                        (is_br ? bu_pc + 8) + {5{bu_pcoffset11[10]}, {bu_pcoffset11[10:0]}}:
+                        pc + 8;
                             
     wire [15:0]bu_r7 = bu_pc + 8;
 
     wire bu_jmp = is_jmp ||
                 is_jsr ||
-                (is_br && ((bu_n && N) || (bu_z && Z) || (bu_p && P)));
+                (is_br && ((bu_n && bu_nzp[2]) || (bu_z && bu_nzp[1]) || (bu_p && bu_nzp[0])));
+    
 
+    always @(posedge clk) begin
+        
+    end
 
     // Load Store Unit: uses forwardD
     //TODO: Add Load Store Unit
 
+    load_store_unit lsu();
+
     always @(posedge clk) begin
         if(pc > 100)
             halt <= 1;
-        pc <= pc + 8;
+        pc <= target;
     end
 endmodule

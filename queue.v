@@ -76,6 +76,7 @@ module queue(
 
         tail <= (tail + inReady0 + inReady1 + inReady2 + inReady3) % QUEUE_SIZE;
     end
+
     integer i;
     //TODO: timing errors between forward cycle and the cycle the instructions get added the queue
     always @(posedge clk) begin
