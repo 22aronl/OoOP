@@ -7,7 +7,7 @@ module reservation_station(input clk,
     reg [56:0] operation [0:4];
     reg commited[0:4];
     //[56] valid, [55:52]operation, [51:46]rob, [45:40]lookA, [39:34] lookB [33:18] valueA, [17:2] value b, [1:0] user
-    assign operationUsed = !commited[0] && !commited[1] && !commited[2] && !commited[3] && !commited[4];
+    assign operationUsed = (!commited[0] && !commited[1] && !commited[2] && !commited[3] && !commited[4]) & inOperation[56];
     integer i;
 
     assign outOperationValid = operation[0][1:0] == 2'b00 | operation[1][1:0] == 2'b00 | operation[2][1:0] == 2'b00 | operation[3][1:0] == 2'b00 | operation[4][1:0] == 2'b00;
@@ -18,6 +18,11 @@ module reservation_station(input clk,
                                 operation[3][1:0] == 2'b00 ? 3'b011 :
                                 operation[4][1:0] == 2'b00 ? 3'b100 : 3'b111;
     assign outOperation = {operation[operationIndex][55:52], operation[operationIndex][51:46], operation[operationIndex][33:18], operation[operationIndex][17:2]};
+
+    initial begin
+        for(i = 0; i < 5; i = i + 1)
+            commited[i] <= 1'b0;
+    end
 
     always @(posedge clk) begin
         if(operationUsed) begin

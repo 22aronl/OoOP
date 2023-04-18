@@ -3,7 +3,7 @@ module store_buffer(
     input [15:0] data, input [15:0] location, input input_valid,//a store instruction
     input [15:0] search_location, //location to search for in the queue
     input [1:0] stores_to_commit, //how mnay in the q to commit to memory
-    output [15:0] search_data, output [15:0] search_valid, //output for inputed search location
+    output [15:0] search_data, output search_valid, //output for inputed search location
     output [15:0] commit_data, output [15:0] commit_location, output commit_valid,//storing commited data TODO: timing issues if storing is instantaneous
     output store_stall //stall if store buffer is full
     );

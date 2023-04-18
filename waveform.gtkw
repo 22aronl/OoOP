@@ -1,0 +1,187 @@
+[*]
+[*] GTKWave Analyzer v3.3.108 (w)1999-2020 BSI
+[*] Tue Apr 18 23:12:02 2023
+[*]
+[dumpfile] "C:\Users\Aaron Lo\Documents\cs429h\OOOP\t0.vcd"
+[dumpfile_mtime] "Tue Apr 18 23:09:58 2023"
+[dumpfile_size] 25133
+[savefile] "C:\Users\Aaron Lo\Documents\cs429h\OOOP\waveform.gtkw"
+[timestart] 0
+[size] 1382 664
+[pos] -1 -1
+*-11.000000 5580 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] main.
+[sst_width] 254
+[signals_width] 126
+[sst_expanded] 1
+[sst_vpaned_height] 179
+@28
+main.clk
+@22
+main.pc[15:0]
+@c00200
+-forward
+@22
+main.forwardA[22:0]
+main.forwardB[22:0]
+main.forwardC[22:0]
+main.forwardD[22:0]
+@1401200
+-forward
+@c00200
+-fetch
+@22
+main.pcA[15:0]
+main.pcB[15:0]
+main.pcC[15:0]
+main.pcD[15:0]
+@1401200
+-fetch
+@c00200
+-decode
+@22
+main.instructA[15:0]
+main.opcodeA[3:0]
+@c00200
+-decodeA
+@22
+main.d1_tailA[5:0]
+@28
+main.writeToRegA
+main.writeRegA[2:0]
+main.regA0[2:0]
+main.regA1[2:0]
+@1401200
+-decodeA
+@22
+main.instructB[15:0]
+main.opcodeB[3:0]
+@c00200
+-decodeB
+@22
+main.d1_tailB[5:0]
+@28
+main.writeToRegB
+main.writeRegB[2:0]
+main.regB0[2:0]
+main.regB1[2:0]
+@1401200
+-decodeB
+@22
+main.instructC[15:0]
+main.opcodeC[3:0]
+@c00200
+-decodeC
+@22
+main.d1_tailC[5:0]
+@28
+main.writeToRegC
+main.writeRegC[2:0]
+main.regC0[2:0]
+main.regC1[2:0]
+@1401200
+-decodeC
+@22
+main.instructD[15:0]
+main.opcodeD[3:0]
+@c00200
+-decodeD
+@22
+main.d1_tailD[5:0]
+@28
+main.writeToRegD
+main.writeRegD[2:0]
+main.regD0[2:0]
+main.regD1[2:0]
+@1401200
+-decodeD
+-decode
+@c00200
+-decode 2
+@22
+main.d2_opcodeA[3:0]
+@c00200
+-decode2_A
+@22
+main.d2_tailA[5:0]
+@28
+main.d2_is_aluA
+main.d2_writeToRegA
+main.d2_writeRegA[2:0]
+main.d2_regA0[2:0]
+main.d2_regA1[2:0]
+main.d2_useA_[1:0]
+@c00022
+main.d2_rdataA0[22:0]
+@28
+(0)main.d2_rdataA0[22:0]
+(1)main.d2_rdataA0[22:0]
+(2)main.d2_rdataA0[22:0]
+(3)main.d2_rdataA0[22:0]
+(4)main.d2_rdataA0[22:0]
+(5)main.d2_rdataA0[22:0]
+(6)main.d2_rdataA0[22:0]
+(7)main.d2_rdataA0[22:0]
+(8)main.d2_rdataA0[22:0]
+(9)main.d2_rdataA0[22:0]
+(10)main.d2_rdataA0[22:0]
+(11)main.d2_rdataA0[22:0]
+(12)main.d2_rdataA0[22:0]
+(13)main.d2_rdataA0[22:0]
+(14)main.d2_rdataA0[22:0]
+(15)main.d2_rdataA0[22:0]
+(16)main.d2_rdataA0[22:0]
+(17)main.d2_rdataA0[22:0]
+(18)main.d2_rdataA0[22:0]
+(19)main.d2_rdataA0[22:0]
+(20)main.d2_rdataA0[22:0]
+(21)main.d2_rdataA0[22:0]
+(22)main.d2_rdataA0[22:0]
+@1401200
+-group_end
+@22
+main.d2_rdataA1[22:0]
+main.d2_lookA0[5:0]
+main.d2_lookA1[5:0]
+main.d2_valueA0[15:0]
+main.d2_valueA1[15:0]
+@28
+main.d2_useA[1:0]
+@1401200
+-decode2_A
+-decode 2
+@c00200
+-alu_queue
+@28
+main.alu_queue.flush
+main.alu_queue.taken[1:0]
+@c00200
+-forward
+@22
+main.alu_queue.forwardA[22:0]
+main.alu_queue.forwardB[22:0]
+main.alu_queue.forwardC[22:0]
+main.alu_queue.forwardD[22:0]
+@1401200
+-forward
+@800200
+-inputA
+@22
+main.alu_queue.inOperation0[3:0]
+main.alu_queue.inROB0[5:0]
+main.alu_queue.inLook0A[5:0]
+main.alu_queue.inLook0B[5:0]
+main.alu_queue.inValue0A[15:0]
+main.alu_queue.inValue0B[15:0]
+@28
+main.alu_queue.inUse0[1:0]
+main.alu_queue.inReady0
+@1000200
+-inputA
+@22
+main.alu_queue.head[5:0]
+main.alu_queue.tail[5:0]
+@1401200
+-alu_queue
+[pattern_trace] 1
+[pattern_trace] 0

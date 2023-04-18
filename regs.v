@@ -39,6 +39,10 @@ module regs(input clk,
         for(i = 0; i < 8; i = i + 1) begin
             busy[i] = 1'b0;
         end
+
+        for(i = 0; i < 8; i = i + 1) begin
+            data[i] = 16'h0000; // TODO: Temporary
+        end
     end
 
     always @(posedge clk) begin

@@ -26,6 +26,11 @@ module queue(
 
     assign outOperation0 = {valid[head], operation[head], rob_num[head], lookA[head], lookB[head], valueA[head], valueB[head], user[head]};
     assign outOperation1 = {valid[(head + 1)%QUEUE_SIZE], operation[(head + 1)%QUEUE_SIZE], rob_num[(head + 1)%QUEUE_SIZE], lookA[(head + 1)%QUEUE_SIZE], lookB[(head + 1)%QUEUE_SIZE], valueA[(head + 1)%QUEUE_SIZE], valueB[(head + 1)%QUEUE_SIZE], user[(head + 1)%QUEUE_SIZE]};
+    integer i;
+    initial begin
+        for(i = 0; i < QUEUE_SIZE; i = i + 1)
+            valid[i] <= 1'b0;
+    end
 
     always @(posedge clk) begin
         head <= (head + taken) % QUEUE_SIZE;
@@ -77,7 +82,7 @@ module queue(
         tail <= (tail + inReady0 + inReady1 + inReady2 + inReady3) % QUEUE_SIZE;
     end
 
-    integer i;
+
     //TODO: timing errors between forward cycle and the cycle the instructions get added the queue
     always @(posedge clk) begin
         for(i = 0; i < QUEUE_SIZE; i = i + 1) begin

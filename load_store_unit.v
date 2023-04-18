@@ -10,7 +10,7 @@ module load_store_unit(
 );
     assign load_stall = store_buffer_stall;
     assign out_ROB = load_store[head][5:0];
-    assign out_data = load_store_data[16] ? load_store_data[head][15:0] : mem_data;
+    assign out_data = load_store_data[head][16] ? load_store_data[head][15:0] : mem_data;
     assign out_valid = load_store[head][6];
 
     //Timing of Load_WAIt might be wrong
