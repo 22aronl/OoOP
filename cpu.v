@@ -149,10 +149,11 @@ module main();
     wire useA1 = is_addrA | is_andrA;
     wire [1:0] useA = {useA0, useA1};
 
-    wire is_aluA = (opcodeA == 4'b0001) | (opcodeA == 4'b1010) | (opcodeA == 4'b1001);
-    wire writeToRegA = (opcodeA == 4'b0001) | (opcodeA == 4'b0101) | (opcodeA == 4'b0010) | (opcodeA == 4'b1010) |
-                            (opcodeA == 4'b0110) | (opcodeA == 4'b1110) | (opcodeA == 4'b1001);
+    wire writeToRegA = is_addrA | is_addiA | is_andrA | is_andiA | is_ldA | is_ldiA | is_ldrA | is_leaA | is_notA;
     wire [2:0] writeRegA = instructA[11:9];
+    wire is_storeA = is_stA | is_stiA | is_strA;
+
+    wire is_aluA = (opcodeA == 4'b0001) | (opcodeA == 4'b1010) | (opcodeA == 4'b1001);
     wire [2:0] regA0 = instructA[8:6];
     wire [2:0] regA1 = instructA[2:0];
 
@@ -200,12 +201,12 @@ module main();
     reg [15:0] d2_imm5A;
     reg [15:0] d2_pc_offset9A;
     reg [15:0] d2_offset6A;
+    reg d2_writeToRegA;
+    reg [2:0] d2_writeRegA;
 
     reg [5:0] d2_tailA; //ROB
     reg [3:0] d2_opcodeA; //Operation
     reg d2_is_aluA;
-    reg d2_writeToRegA;
-    reg [2:0] d2_writeRegA;
     reg [2:0] d2_regA0;
     reg [2:0] d2_regA1;
     reg [1:0] d2_useA_;
@@ -217,10 +218,11 @@ module main();
     
     wire [5:0] d2_lookA0 = d2_rdataA0[5:0];
     wire [5:0] d2_lookA1 = d2_rdataA1[5:0];
-    wire [15:0] d2_valueA0 = (d2_instructA[14] | d2_instructA[10] | d2_instructA[9] | d2_instructA[7] | d2_instructA[3] | d2_instructA[2]) ? d2_pc_offset9A :
+    wire [15:0] d2_valueA0 = (d2_instructA[14] | d2_instructA[10] | d2_instructA[9] | d2_instructA[7] | d2_instructA[3] | d2_instructA[2]) ? d1_pcA :
                                 d2_rdataA0[6] ? ROB[d2_rdataA0[5:0]] : 
                                 d2_rdataA0[22:7];
-    wire [15:0] d2_valueA1 = (d2_instructA[17] | d2_instructA[15]) ? d2_imm5A :
+    wire [15:0] d2_valueA1 = (d2_instructA[14] | d2_instructA[10] | d2_instructA[9] | d2_instructA[7] | d2_instructA[3] | d2_instructA[2]) ? d2_pc_offset9A : 
+                                (d2_instructA[17] | d2_instructA[15]) ? d2_imm5A :
                                 (d2_instructA[8]) ? d2_offset6A :
                                 (d2_rdataA1[6]) ? ROB[d2_rdataA1[5:0]] : 
                                 d2_rdataA1[22:7];
@@ -244,7 +246,7 @@ module main();
     reg d2_is_ldunitD;
     reg d2_is_bunitD;
     wire [56:0] d2_outputD;
-
+    //TODO: Store needs additional memory storage
     // [22:7]data, [6] busy, [5:0] rob_loc
     always @(posedge clk) begin
         d2_instructA <= d1_instructA;
@@ -253,12 +255,12 @@ module main();
         d2_imm5A <= imm5A;
         d2_pc_offset9A <= pc_offset9A;
         d2_offset6A <= offset6A;
+        d2_writeToRegA <= writeToRegA;
+        d2_writeRegA <= writeRegA;
 
         d2_tailA <= d1_tailA;
         d2_opcodeA <= opcodeA;
         d2_is_aluA <= is_aluA;
-        d2_writeToRegA <= writeToRegA;
-        d2_writeRegA <= writeRegA;
         d2_regA0 <= regA0;
         d2_regA1 <= regA1;
         d2_useA_ <= useA;
@@ -274,7 +276,7 @@ module main();
     //TODO: Add support for the condition registers
     //Ready Bit, Value, PC (for piping into cache & branch checking for now)
     reg [32:0] ROB[0:63];
-    //Addition check for: [5] isOutput, [4] IsStore, [3] IsWriteToReg, [2:0] RegNum
+    //Addition check for: [6] isTrap, [4] IsStore, [3] IsWriteToReg, [2:0] RegNum
     reg [5:0] ROBcheck[0:63];
     reg [5:0] ROBhead = 5'h00;
     reg [5:0] ROBtail = 5'h00;
@@ -282,10 +284,16 @@ module main();
 
     always @(posedge clk) begin
         ROB[d1_tailA][15:0] <= pcA;
+        ROB[d1_tailA][32] <= 1'b0;
+
+        //TODO Update
         ROB[d1_tailB][15:0] <= pcB;
         ROB[d1_tailC][15:0] <= pcC;
         ROB[d1_tailD][15:0] <= pcD;
-        ROBtail <= (ROBtail + 4) % 64;
+        if(is_validA)
+            ROBtail <= (ROBtail + 4) % 64;
+
+        ROBcheck[d1_tailA] <= {is_trapA, is_storeA, is_writeToRegA, writeRegA};
     end
 
     always @(posedge clk) begin
@@ -331,6 +339,24 @@ module main();
     // // //
 
     //TODO: Fix Wiring
+    wire [56:0] alu_feederA;
+    wire [56:0] alu_feederB;
+    wire [56:0] alu_feederC;
+    wire [56:0] alu_feederD;
+    wire alu_feedervalidA;
+    wire alu_feedervalidB;
+    wire alu_feedervalidC;
+    wire alu_feedervalidD;
+    queue_feeder alu_feeder(
+        .inOperationA(d2_outputA), .validA(d2_is_aluunitA),
+        .inOperationB(d2_outputB), .validB(d2_is_aluunitB),
+        .inOperationC(d2_outputC), .validC(d2_is_aluunitC),
+        .inOperationD(d2_outputD), .validD(d2_is_aluunitD),
+        .outOperationA(alu_feederA), .outValidA(alu_feedervalidA),
+        .outOperationB(alu_feederB), .outValidB(alu_feedervalidB),
+        .outOperationC(alu_feederC), .outValidC(alu_feedervalidC),
+        .outOperationD(alu_feederD), .outValidD(alu_feedervalidD)
+    );
 
     wire alu_queue_used_0;
     wire alu_queue_used_1;
@@ -344,10 +370,10 @@ module main();
         .flush(),
         .taken(alu_queue_used),
         .forwardA(forwardA), .forwardB(forwardB), .forwardC(forwardC), .forwardD(forwardD),
-        .inOperation0(d2_opcodeA), .inROB0(d2_tailA), .inLook0A(d2_lookA0), .inLook0B(d2_lookA1), .inValue0A(d2_valueA0), .inValue0B(d2_valueA1), .inUse0(d2_useA), .inReady0(d2_instructA[19]),
-        .inOperation1(), .inROB1(), .inLook1A(), .inLook1B(), .inUse1(), .inReady1(1'b0),
-        .inOperation2(), .inROB2(), .inLook2A(), .inLook2B(), .inUse2(), .inReady2(1'b0),
-        .inOperation3(), .inROB3(), .inLook3A(), .inLook3B(), .inUse3(), .inReady3(1'b0),
+        .inOperation0(alu_feederA[56:53]), .inROB0(alu_feederA[52:47]), .inLook0A(alu_feederA[46:41]), .inLook0B(alu_feederA[40:35]), .inValue0A(alu_feederA[34:19]), .inValue0B(alu_feederA[18:3]), .inUse0(alu_feederA[2:1]), .inReady0(alu_feederA[0] & alu_feedervalidA),
+        .inOperation1(alu_feederB[56:53]), .inROB1(alu_feederB[52:47]), .inLook1A(alu_feederB[46:41]), .inLook1B(alu_feederB[40:35]), .inValue1A(alu_feederB[34:19]), .inValue1B(alu_feederB[18:3]), .inUse1(alu_feederB[2:1]), .inReady1(alu_feederB[0] & alu_feedervalidB),
+        .inOperation2(alu_feederC[56:53]), .inROB2(alu_feederC[52:47]), .inLook2A(alu_feederC[46:41]), .inLook2B(alu_feederC[40:35]), .inValue2A(alu_feederC[34:19]), .inValue2B(alu_feederC[18:3]), .inUse2(alu_feederC[2:1]), .inReady2(alu_feederC[0] & alu_feedervalidC),
+        .inOperation3(alu_feederD[56:53]), .inROB3(alu_feederD[52:47]), .inLook3A(alu_feederD[46:41]), .inLook3B(alu_feederD[40:35]), .inValue3A(alu_feederD[34:19]), .inValue3B(alu_feederD[18:3]), .inUse3(alu_feederD[2:1]), .inReady3(alu_feederD[0] & alu_feedervalidD),
         .outOperation0(alu_queue_out0),
         .outOperation1(alu_queue_out1)
     );
@@ -518,6 +544,7 @@ module main();
         .outOperation0(lsu_out),
         .outOperation1()
     );
+
     wire load_stall;
     wire [15:0] lsu_data;
     wire [5:0] lsu_rob;
@@ -543,4 +570,14 @@ module main();
         pc <= pc + 8;
         //pc <= target;
     end
+
+
+    //ROB Commit Unit
+    always @(posedge clk) begin
+        if(ROB[ROBhead][32] === 1'b1) begin
+            //Commit
+            ROBhead <= (ROBhead + 1) % 64;
+        end
+    end
+
 endmodule
