@@ -1,20 +1,20 @@
 [*]
 [*] GTKWave Analyzer v3.3.108 (w)1999-2020 BSI
-[*] Tue Apr 18 23:12:02 2023
+[*] Wed Apr 19 18:46:14 2023
 [*]
 [dumpfile] "C:\Users\Aaron Lo\Documents\cs429h\OOOP\t0.vcd"
-[dumpfile_mtime] "Tue Apr 18 23:09:58 2023"
-[dumpfile_size] 25133
+[dumpfile_mtime] "Wed Apr 19 18:46:07 2023"
+[dumpfile_size] 27203
 [savefile] "C:\Users\Aaron Lo\Documents\cs429h\OOOP\waveform.gtkw"
 [timestart] 0
-[size] 1382 664
+[size] 1350 634
 [pos] -1 -1
-*-11.000000 5580 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-11.000000 1000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] main.
 [sst_width] 254
-[signals_width] 126
+[signals_width] 150
 [sst_expanded] 1
-[sst_vpaned_height] 179
+[sst_vpaned_height] 200
 @28
 main.clk
 @22
@@ -183,5 +183,36 @@ main.alu_queue.head[5:0]
 main.alu_queue.tail[5:0]
 @1401200
 -alu_queue
+@c00200
+-decodeA
+@28
+main.is_aluunitA
+main.is_ldunitA
+@c00200
+-d1_instructA
+@28
+main.is_addrA
+main.is_addiA
+main.is_andrA
+main.is_andiA
+main.is_brA
+main.is_jmpA
+main.is_jsrA
+main.is_jsrrA
+main.is_ldA
+main.is_ldiA
+main.is_ldrA
+main.is_leaA
+main.is_notA
+main.is_retA
+main.is_retiA
+main.is_stA
+main.is_stiA
+main.is_strA
+main.is_trapA
+main.is_validA
+@1401200
+-d1_instructA
+-decodeA
 [pattern_trace] 1
 [pattern_trace] 0

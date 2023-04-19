@@ -216,6 +216,7 @@ module main();
     // [19] is_valid, [18]addr, [17] addi, [16] andr, [15] andi, [14] br, [13] jmp, [12] jsr, [11] jsrr, [10] ld, 
     // [9] ldi, [8] ldr, [7] lea, [6] not, [5] ret, [4] reti, [3] st, [2] sti, [1] str, [0] trap
     
+    //TODO: Storage issues for store commands
     wire [5:0] d2_lookA0 = d2_rdataA0[5:0];
     wire [5:0] d2_lookA1 = d2_rdataA1[5:0];
     wire [15:0] d2_valueA0 = (d2_instructA[14] | d2_instructA[10] | d2_instructA[9] | d2_instructA[7] | d2_instructA[3] | d2_instructA[2]) ? d1_pcA :
@@ -232,19 +233,19 @@ module main();
 
     wire [56:0] d2_outputA = {d2_opcodeA, d2_tailA, d2_lookA0, d2_lookA1, d2_valueA0, d2_valueA1, d2_useA, d2_instructA[19]};
 
-    reg d2_is_aluunitB;
-    reg d2_is_ldunitB;
-    reg d2_is_bunitB;
+    reg d2_is_aluunitB = 1'b0;
+    reg d2_is_ldunitB = 1'b0;
+    reg d2_is_bunitB = 1'b0;
     wire [56:0] d2_outputB;
 
-    reg d2_is_aluunitC;
-    reg d2_is_ldunitC;
-    reg d2_is_bunitC;
+    reg d2_is_aluunitC = 1'b0;
+    reg d2_is_ldunitC = 1'b0;
+    reg d2_is_bunitC = 1'b0;
     wire [56:0] d2_outputC;
 
-    reg d2_is_aluunitD;
-    reg d2_is_ldunitD;
-    reg d2_is_bunitD;
+    reg d2_is_aluunitD = 1'b0;
+    reg d2_is_ldunitD = 1'b0;
+    reg d2_is_bunitD = 1'b0;
     wire [56:0] d2_outputD;
     //TODO: Store needs additional memory storage
     // [22:7]data, [6] busy, [5:0] rob_loc
@@ -276,7 +277,7 @@ module main();
     //TODO: Add support for the condition registers
     //Ready Bit, Value, PC (for piping into cache & branch checking for now)
     reg [32:0] ROB[0:63];
-    //Addition check for: [6] isTrap, [4] IsStore, [3] IsWriteToReg, [2:0] RegNum
+    //Addition check for: [5] isTrap, [4] IsStore, [3] IsWriteToReg, [2:0] RegNum
     reg [5:0] ROBcheck[0:63];
     reg [5:0] ROBhead = 5'h00;
     reg [5:0] ROBtail = 5'h00;
@@ -293,7 +294,7 @@ module main();
         if(is_validA)
             ROBtail <= (ROBtail + 4) % 64;
 
-        ROBcheck[d1_tailA] <= {is_trapA, is_storeA, is_writeToRegA, writeRegA};
+        ROBcheck[d1_tailA] <= {is_trapA, is_storeA, writeToRegA, writeRegA};
     end
 
     always @(posedge clk) begin
@@ -530,17 +531,45 @@ module main();
         bu_value <= bu_rs_out[31:0];
     end
 
+
+
+    // // // // // // // //
+    // Load Store Unit // //
+    // // // // // // // // 
+
+
     // Load Store Unit: uses forwardD
+
+    wire [56:0] ld_feederA;
+    wire [56:0] ld_feederB;
+    wire [56:0] ld_feederC;
+    wire [56:0] ld_feederD;
+    wire ld_feedervalidA;
+    wire ld_feedervalidB;
+    wire ld_feedervalidC;
+    wire ld_feedervalidD;
+    queue_feeder lsu_feeder(
+        .inOperationA(d2_outputA), .validA(d2_is_ldunitA),
+        .inOperationB(d2_outputB), .validB(d2_is_ldunitB),
+        .inOperationC(d2_outputC), .validC(d2_is_ldunitC),
+        .inOperationD(d2_outputD), .validD(d2_is_ldunitD),
+        .outOperationA(ld_feederA), .outValidA(ld_feedervalidA),
+        .outOperationB(ld_feederB), .outValidB(ld_feedervalidB),
+        .outOperationC(ld_feederC), .outValidC(ld_feedervalidC),
+        .outOperationD(ld_feederD), .outValidD(ld_feedervalidD)
+    );
+
     wire [56:0] lsu_out;
+    wire lsu_used;
     queue lsu_queue(
         .clk(clk),
         .flush(),
-        .taken({1'b0, !load_stall}),
+        .taken({1'b0, !load_stall & lsu_used}),
         .forwardA(forwardA), .forwardB(forwardB), .forwardC(forwardC), .forwardD(forwardD),
-        .inOperation0(), .inROB0(), .inLook0A(), .inLook0B(), .inUse0(), .inReady0(),
-        .inOperation1(), .inROB1(), .inLook1A(), .inLook1B(), .inUse1(), .inReady1(),
-        .inOperation2(), .inROB2(), .inLook2A(), .inLook2B(), .inUse2(), .inReady2(),
-        .inOperation3(), .inROB3(), .inLook3A(), .inLook3B(), .inUse3(), .inReady3(),
+        .inOperation0(ld_feederA[56:53]), .inROB0(ld_feederA[52:47]), .inLook0A(ld_feederA[46:41]), .inLook0B(ld_feederA[40:35]), .inValue0A(ld_feederA[34:19]), .inValue0B(ld_feederA[18:3]), .inUse0(ld_feederA[2:1]), .inReady0(ld_feederA[0] & ld_feedervalidA),
+        .inOperation1(ld_feederB[56:53]), .inROB1(ld_feederB[52:47]), .inLook1A(ld_feederB[46:41]), .inLook1B(ld_feederB[40:35]), .inValue1A(ld_feederB[34:19]), .inValue1B(ld_feederB[18:3]), .inUse1(ld_feederB[2:1]), .inReady1(ld_feederB[0] & ld_feedervalidB),
+        .inOperation2(ld_feederC[56:53]), .inROB2(ld_feederC[52:47]), .inLook2A(ld_feederC[46:41]), .inLook2B(ld_feederC[40:35]), .inValue2A(ld_feederC[34:19]), .inValue2B(ld_feederC[18:3]), .inUse2(ld_feederC[2:1]), .inReady2(ld_feederC[0] & ld_feedervalidC),
+        .inOperation3(ld_feederD[56:53]), .inROB3(ld_feederD[52:47]), .inLook3A(ld_feederD[46:41]), .inLook3B(ld_feederD[40:35]), .inValue3A(ld_feederD[34:19]), .inValue3B(ld_feederD[18:3]), .inUse3(ld_feederD[2:1]), .inReady3(ld_feederD[0] & ld_feedervalidD),
         .outOperation0(lsu_out),
         .outOperation1()
     );
@@ -549,12 +578,17 @@ module main();
     wire [15:0] lsu_data;
     wire [5:0] lsu_rob;
     wire lsu_out_valid;
-
+    assign lsu_used = lsu_out[2:1] === 2'b00;
+    wire load_flush = 1'b0;
+    wire [1:0] store_buffer_commit = 2'b00;
+    wire load_is_ld = (lsu_out[55:52]===4'b0010) | (lsu_out[56:52]===4'b1010) | (lsu_out[56:52]===4'b0110);
+    //TODO: STORE ISSUE
+    //TODO: Load location line up issues
     load_store_unit lsu(
         .clk(clk),
-        .flush(),
-        .stores_to_commit(),
-        .is_ld(), .data(), .location(), .ROBloc(), .input_valid(),
+        .flush(load_flush),
+        .stores_to_commit(store_buffer_commit),
+        .is_ld(load_is_ld), .data(lsu_out[33:18]), .location(lsu_out[17:2]), .ROBloc(lsu_out[51:46]), .input_valid(lsu_used),
         .commit_data(mem_wdata), .commit_location(mem_waddr), .commit_valid(mem_wen),
         .mem_location(mem_raddr), .mem_valid(),
         .mem_data(mem_rdata),
@@ -571,11 +605,25 @@ module main();
         //pc <= target;
     end
 
+    wire [5:0] headOfROB = ROBcheck[ROBhead];
+    wire [15:0] ROBa = ROB[ROBhead];
 
     //ROB Commit Unit
     always @(posedge clk) begin
         if(ROB[ROBhead][32] === 1'b1) begin
-            //Commit
+            
+            if(ROBcheck[ROBhead][5] == 1'b1) begin
+                //IsTrapVector
+                $write("TRAPP");
+            end
+            else if(ROBcheck[ROBhead][4] == 1'b1) begin
+                //Is Store
+            end
+            else if(ROBcheck[ROBhead][3] == 1'b1) begin
+                //Is Write to Reg
+                $write("WRITE");
+            end
+
             ROBhead <= (ROBhead + 1) % 64;
         end
     end

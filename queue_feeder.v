@@ -38,6 +38,6 @@ module queue_feeder(
                             (validA & validC) ? inOperationD :
                             inOperationD;
 
-    assing outOperationD = inOperationD;
+    assign outOperationD = inOperationD;
 
 endmodule
