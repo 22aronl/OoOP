@@ -386,9 +386,11 @@ module main();
 
 
     // Branch Unit: uses forwardC
+    reg bu_valid;
+
     reg [3:0] bu_opcode;
     reg [5:0] bu_rob;
-    reg [15:0] bu_value;
+    reg [31:0] bu_value;
     reg [15:0] bu_pcoffset11;
     reg bu_rflag;
     reg [15:0] bu_pc;
@@ -413,7 +415,10 @@ module main();
         //TODO: bu_n does not exist
 
     always @(posedge clk) begin
-        
+        bu_valid <= bu_rs_valid;
+        bu_opcode <= bu_rs_out[40:37];
+        bu_rob <= bu_rs_out[36:32];
+        bu_value <= bu_rs_out[31:0];
     end
 
     // Load Store Unit: uses forwardD
