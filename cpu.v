@@ -279,6 +279,7 @@ module main();
     reg [32:0] ROB[0:63];
     //Addition check for: [5] isTrap, [4] IsStore, [3] IsWriteToReg, [2:0] RegNum
     reg [5:0] ROBcheck[0:63];
+    reg [2:0] ROB_condition_codes[0:63]; // N, Z, P
     reg [5:0] ROBhead = 5'h00;
     reg [5:0] ROBtail = 5'h00;
     reg [5:0] ROBsize = 5'h00;
@@ -300,11 +301,13 @@ module main();
     always @(posedge clk) begin
         if(forwardA[22] == 1'b1) begin
             ROB[forwardA[21:16]][31:16] <= forwardA[15:0];
+            ROB_condition_codes[forwardA[21:16]] <= condition_code_A;
             ROB[forwardA[21:16]][32] <= 1'b1;
         end
 
         if(forwardB[22] == 1'b1) begin
             ROB[forwardB[21:16]][31:16] <= forwardB[15:0];
+            ROB_condition_codes[forwardC[21:16]] <= condition_code_B;
             ROB[forwardB[21:16]][32] <= 1'b1;
         end
 
@@ -315,6 +318,7 @@ module main();
 
         if(forwardD[22] == 1'b1) begin
             ROB[forwardD[21:16]][31:16] <= forwardD[15:0];
+            ROB_condition_codes[forwardD[21:16]] <= condition_code_D;
             ROB[forwardD[21:16]][32] <= 1'b1;
         end
     end
@@ -446,8 +450,9 @@ module main();
                             (alu_opcode0 == 4'b0101) ? alu_value0A[4] & alu_value0B[4] :    // AND (based on bit 5)
                             (alu_opcode0 == 4'b1001) ? ~alu_value0A :   0;                    // NOT
     
-    // NZP
     assign forwardA = {alu_valid0, alu_rob0, alu_out0};
+    wire [2:0] condition_code_A = (alu_opcode0 == 4'b0001) | (alu_opcode0 == 4'b0101) | (alu_opcode0 == 4'b1001) ?
+                                    {1'b1, alu_out0[15], alu_out0 == 0, ~alu_out0[15], alu_rob0} : 0;
 
     always @(posedge clk) begin
         //TODO: link functional unit A to instruction queue
@@ -456,16 +461,6 @@ module main();
         alu_rob0 <= alu_rs_0_out[36:32];
         alu_value0A <= alu_rs_0_out[31:16];
         alu_value0B <= alu_rs_0_out[15:0];
-        if ((alu_opcode0 == 4'b0001) | (alu_opcode0 == 4'b0101) | (alu_opcode0 == 4'b1001)
-            & alu_rob0 > conditionCode[5:0]
-            & alu_rob0 > alu_rob1
-            & alu_valid0)
-            //& alu_rob0 > load store unit rob
-            //& alu_rob0 > branch unit rob
-            begin
-                //conditionCode <= {1'b1, {alu_out0[15], alu_out0 ==== 0, ~alu_out0[15]}, alu_rob0};
-                conditionCode <= {1'b1, alu_out0[15], alu_out0 == 0, ~alu_out0[15], alu_rob0};
-            end
     end
 
     // ALU 2: uses forwardB
@@ -481,8 +476,9 @@ module main();
                             (alu_opcode1 == 4'b0101) ? alu_value1A[4] & alu_value1B[4] :    // AND (based on bit 5)
                             (alu_opcode1 == 4'b1001) ? ~alu_value1A :                       // NOT
                             0;
-    // NZP
     assign forwardB = {alu_valid1, alu_rob1, alu_out1};
+    wire [2:0] condition_code_B = (alu_opcode1 == 4'b0001) | (alu_opcode1 == 4'b0101) | (alu_opcode1 == 4'b1001) ?
+                                    {1'b1, alu_out1[15], alu_out1 == 0, ~alu_out1[15], alu_rob1} : 0;
 
     always @(posedge clk) begin
         alu_valid1 <= alu_rs_1_valid;
@@ -597,6 +593,7 @@ module main();
     );
 
     assign forwardD = {lsu_out_valid, lsu_rob, lsu_data};
+    wire [2:0] condition_code_D = {1'b1, lsu_data[15], lsu_data == 0, ~lsu_data[15], lsu_rob};
 
     always @(posedge clk) begin
         if(pc > 100)
