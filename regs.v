@@ -9,10 +9,10 @@ module regs(input clk,
     input [2:0]raddr5_, output [22:0]rdata5,
     input [2:0]raddr6_, output [22:0]rdata6,
     input [2:0]raddr7_, output [22:0]rdata7,
-    input [5:0] rob_locA, input rob_waddrA, input rob_wenA,
-    input [5:0] rob_locB, input rob_waddrB,
-    input [5:0] rob_locC, input rob_waddrC,
-    input [5:0] rob_locD, input rob_waddrD,
+    input [5:0] rob_locA, input [2:0] rob_waddrA, input rob_wenA,
+    input [5:0] rob_locB, input [2:0] rob_waddrB, input rob_wenB,
+    input [5:0] rob_locC, input [2:0] rob_waddrC, input rob_wenC,
+    input [5:0] rob_locD, input [2:0] rob_waddrD, input rob_wenD,
     input wen0, input [2:0]waddr0, input [15:0]wdata0,
     input wen1, input [2:0]waddr1, input [15:0]wdata1);
 
@@ -59,10 +59,18 @@ module regs(input clk,
         raddr6 <= raddr6_;
         raddr7 <= raddr7_;
 
-        rob[rob_waddrA] <= rob_locA;
-        rob[rob_waddrB] <= rob_locB;
-        rob[rob_waddrC] <= rob_locC;
-        rob[rob_waddrD] <= rob_locD;
+        if (rob_wenD) begin
+            rob_loc[rob_waddrD] <= rob_locD;
+        end
+        if (rob_wenC) begin
+            rob_loc[rob_waddrC] <= rob_locC;
+        end
+        if (rob_wenB) begin
+            rob_loc[rob_waddrB] <= rob_locB;
+        end
+        if (rob_wenA) begin
+            rob_loc[rob_waddrA] <= rob_locA;
+        end
 
         if (wen0) begin
             data[waddr0] <= wdata0;
