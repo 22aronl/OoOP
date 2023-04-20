@@ -157,28 +157,159 @@ module main();
     wire [2:0] regA0 = instructA[8:6];
     wire [2:0] regA1 = instructA[2:0];
 
-    
+
 
     wire [3:0] opcodeB = instructB[15:12];
-    wire writeToRegB = (opcodeB == 4'b0001) | (opcodeB == 4'b0101) | (opcodeB == 4'b0010) | (opcodeB == 4'b1010) |
-                            (opcodeB == 4'b0110) | (opcodeB == 4'b1110) | (opcodeB == 4'b1001);
+
+    wire is_addrB = (opcodeB === 4'b0001) & (instructB[5:3] === 3'b000);
+    wire is_addiB = (opcodeB === 4'b0001) & (instructB[5] === 1'b1);
+    wire is_andrB = (opcodeB == 4'b0101) & (instructB[5:3] === 3'b000);
+    wire is_andiB = (opcodeB === 4'b0101) & (instructB[5] === 1'b1);
+    wire is_brB = (opcodeB === 4'b0000);
+    wire is_jmpB = (opcodeB === 4'b1100) & (instructB[11:9] === 3'b000) & (instructB[5:0] === 6'b000000);
+    wire is_jsrB = (opcodeB === 4'b0100) & (instructB[11] == 1'b1);
+    wire is_jsrrB = (opcodeB === 4'b0100) & (instructB[11:9] === 3'b000) & (instructB[5:0] !== 6'b000000); 
+    wire is_ldB = (opcodeB === 4'b0010);
+    wire is_ldiB = (opcodeB === 4'b1010);
+    wire is_ldrB = (opcodeB === 4'b0110);
+    wire is_leaB = (opcodeB === 4'b1110);
+    wire is_notB = (opcodeB === 4'b1001) & (instructB[5:0] === 6'b111111);
+    wire is_retB = (instructB === 16'hC1C0);
+    wire is_retiB = (instructB === 16'h8000);
+    wire is_stB = (opcodeB === 4'b0011);
+    wire is_stiB = (opcodeB === 4'b1011);
+    wire is_strB = (opcodeB === 4'b0111);
+    wire is_trapB = (opcodeB === 4'b1111);
+    wire is_validB = is_addrB | is_addiB | is_andrB | is_andiB | is_brB | 
+                        is_jmpB | is_jsrB | is_jsrrB | is_ldB | is_ldiB | 
+                        is_ldrB | is_leaB | is_notB | is_retB | is_retiB | is_stB | is_stiB | is_strB | is_trapB;
+
+    wire [19:0] d1_instructB = {is_validB, is_addrB, is_addiB, is_andrB, is_andiB, is_brB, 
+                                    is_jmpB, is_jsrB, is_jsrrB, is_ldB, is_ldiB, 
+                                    is_ldrB, is_leaB, is_notB, is_retB, is_retiB, 
+                                    is_stB, is_stiB, is_strB, is_trapB};
+
+
+    wire is_ldunitB = is_ldB | is_ldiB | is_ldrB | is_stB | is_stiB | is_strB;
+    wire is_aluunitB = is_addrB | is_addiB | is_andiB | is_notB | is_leaB;
+
+    wire [15:0] imm5B = {{12{instructB[4]}}, instructB[3:0]};
+    wire [15:0] pc_offset9B = {{8{instructB[8]}}, instructB[7:0]};
+    wire [15:0] offset6B = {{11{instructB[5]}}, instructB[4:0]};
+
+    wire useB0 = is_addrB | is_addiB | is_andrB | is_andiB | is_jmpB | is_jsrrB | is_ldrB | is_notB;
+    wire useB1 = is_addrB | is_andrB;
+    wire [1:0] useB = {useB0, useB1};
+
+    wire writeToRegB = is_addrB | is_addiB | is_andrB | is_andiB | is_ldB | is_ldiB | is_ldrB | is_leaB | is_notB;
     wire [2:0] writeRegB = instructB[11:9];
+    wire is_storeB = is_stB | is_stiB | is_strB;
+
+    wire is_aluB = (opcodeB == 4'b0001) | (opcodeB == 4'b1010) | (opcodeB == 4'b1001);
     wire [2:0] regB0 = instructB[8:6];
     wire [2:0] regB1 = instructB[2:0];
 
+
     wire [3:0] opcodeC = instructC[15:12];
-    wire writeToRegC = (opcodeC == 4'b0001) | (opcodeC == 4'b0101) | (opcodeC == 4'b0010) | (opcodeC == 4'b1010) |
-                            (opcodeC == 4'b0110) | (opcodeC == 4'b1110) | (opcodeC == 4'b1001);
+
+    wire is_addrC = (opcodeB === 4'b0001) & (instructB[5:3] === 3'b000);
+    wire is_addiC = (opcodeB === 4'b0001) & (instructB[5] === 1'b1);
+    wire is_andrC = (opcodeB == 4'b0101) & (instructB[5:3] === 3'b000);
+    wire is_andiC = (opcodeB === 4'b0101) & (instructB[5] === 1'b1);
+    wire is_brC = (opcodeB === 4'b0000);
+    wire is_jmpC = (opcodeB === 4'b1100) & (instructB[11:9] === 3'b000) & (instructB[5:0] === 6'b000000);
+    wire is_jsrC = (opcodeB === 4'b0100) & (instructB[11] == 1'b1);
+    wire is_jsrrC = (opcodeB === 4'b0100) & (instructB[11:9] === 3'b000) & (instructB[5:0] !== 6'b000000); 
+    wire is_ldC = (opcodeB === 4'b0010);
+    wire is_ldiC = (opcodeB === 4'b1010);
+    wire is_ldrC = (opcodeB === 4'b0110);
+    wire is_leaC = (opcodeB === 4'b1110);
+    wire is_notC = (opcodeB === 4'b1001) & (instructB[5:0] === 6'b111111);
+    wire is_retC = (instructB === 16'hC1C0);
+    wire is_retiC = (instructB === 16'h8000);
+    wire is_stC = (opcodeB === 4'b0011);
+    wire is_stiC = (opcodeB === 4'b1011);
+    wire is_strC = (opcodeB === 4'b0111);
+    wire is_trapC = (opcodeB === 4'b1111);
+    wire is_validC = is_addrC | is_addiC | is_andrC | is_andiC | is_brC | 
+                        is_jmpC | is_jsrC | is_jsrrC | is_ldC | is_ldiC | 
+                        is_ldrC | is_leaC | is_notC | is_retC | is_retiC | is_stC | is_stiC | is_strC | is_trapC;
+
+    wire [19:0] d1_instructC = {is_validC, is_addrC, is_addiC, is_andrC, is_andiC, is_brC, 
+                                    is_jmpC, is_jsrC, is_jsrrC, is_ldC, is_ldiC, 
+                                    is_ldrC, is_leaC, is_notC, is_retC, is_retiC, 
+                                    is_stC, is_stiC, is_strC, is_trapC};
+
+
+    wire is_ldunitC = is_ldC | is_ldiC | is_ldrC | is_stC | is_stiC | is_strC;
+    wire is_aluunitC = is_addrC | is_addiC | is_andiC | is_notC | is_leaC;
+
+    wire [15:0] imm5C = {{12{instructC[4]}}, instructC[3:0]};
+    wire [15:0] pc_offset9C = {{8{instructC[8]}}, instructC[7:0]};
+    wire [15:0] offset6C = {{11{instructC[5]}}, instructC[4:0]};
+
+    wire useC0 = is_addrC | is_addiC | is_andrC | is_andiC | is_jmpC | is_jsrrC | is_ldrC | is_notC;
+    wire useC1 = is_addrC | is_andrC;
+    wire [1:0] useC = {useC0, useC1};
+
+    wire writeToRegC = is_addrC | is_addiC | is_andrC | is_andiC | is_ldC | is_ldiC | is_ldrC | is_leaC | is_notC;
     wire [2:0] writeRegC = instructC[11:9];
+    wire is_storeC = is_stC | is_stiC | is_strC;
+
+    wire is_aluC = (opcodeC == 4'b0001) | (opcodeC == 4'b1010) | (opcodeC == 4'b1001);
     wire [2:0] regC0 = instructC[8:6];
     wire [2:0] regC1 = instructC[2:0];
 
     wire [3:0] opcodeD = instructD[15:12];
-    wire writeToRegD = (opcodeD == 4'b0001) | (opcodeD == 4'b0101) | (opcodeD == 4'b0010) | (opcodeD == 4'b1010) |
-                            (opcodeD == 4'b0110) | (opcodeD == 4'b1110) | (opcodeD == 4'b1001);
+
+    wire is_addrD = (opcodeB === 4'b0001) & (instructB[5:3] === 3'b000);
+    wire is_addiD = (opcodeB === 4'b0001) & (instructB[5] === 1'b1);
+    wire is_andrD = (opcodeB == 4'b0101) & (instructB[5:3] === 3'b000);
+    wire is_andiD = (opcodeB === 4'b0101) & (instructB[5] === 1'b1);
+    wire is_brD = (opcodeB === 4'b0000);
+    wire is_jmpD = (opcodeB === 4'b1100) & (instructB[11:9] === 3'b000) & (instructB[5:0] === 6'b000000);
+    wire is_jsrD = (opcodeB === 4'b0100) & (instructB[11] == 1'b1);
+    wire is_jsrrD = (opcodeB === 4'b0100) & (instructB[11:9] === 3'b000) & (instructB[5:0] !== 6'b000000); 
+    wire is_ldD = (opcodeB === 4'b0010);
+    wire is_ldiD = (opcodeB === 4'b1010);
+    wire is_ldrD = (opcodeB === 4'b0110);
+    wire is_leaD = (opcodeB === 4'b1110);
+    wire is_notD = (opcodeB === 4'b1001) & (instructB[5:0] === 6'b111111);
+    wire is_retD = (instructB === 16'hC1C0);
+    wire is_retiD = (instructB === 16'h8000);
+    wire is_stD = (opcodeB === 4'b0011);
+    wire is_stiD = (opcodeB === 4'b1011);
+    wire is_strD = (opcodeB === 4'b0111);
+    wire is_trapD = (opcodeB === 4'b1111);
+    wire is_validD = is_addrD | is_addiD | is_andrD | is_andiD | is_brD | 
+                        is_jmpD | is_jsrD | is_jsrrD | is_ldD | is_ldiD | 
+                        is_ldrD | is_leaD | is_notD | is_retD | is_retiD | is_stD | is_stiD | is_strD | is_trapD;
+
+    wire [19:0] d1_instructD = {is_validD, is_addrD, is_addiD, is_andrD, is_andiD, is_brD, 
+                                    is_jmpD, is_jsrD, is_jsrrD, is_ldD, is_ldiD, 
+                                    is_ldrD, is_leaD, is_notD, is_retD, is_retiD, 
+                                    is_stD, is_stiD, is_strD, is_trapD};
+
+
+    wire is_ldunitD = is_ldD | is_ldiD | is_ldrD | is_stD | is_stiD | is_strD;
+    wire is_aluunitD = is_addrD | is_addiD | is_andiD | is_notD | is_leaD;
+
+    wire [15:0] imm5D = {{12{instructD[4]}}, instructD[3:0]};
+    wire [15:0] pc_offset9D = {{8{instructD[8]}}, instructD[7:0]};
+    wire [15:0] offset6D = {{11{instructD[5]}}, instructD[4:0]};
+
+    wire useD0 = is_addrD | is_addiD | is_andrD | is_andiD | is_jmpD | is_jsrrD | is_ldrD | is_notD;
+    wire useD1 = is_addrD | is_andrD;
+    wire [1:0] useD = {useD0, useD1};
+
+    wire writeToRegD = is_addrD | is_addiD | is_andrD | is_andiD | is_ldD | is_ldiD | is_ldrD | is_leaD | is_notD;
     wire [2:0] writeRegD = instructD[11:9];
+    wire is_storeD = is_stD | is_stiD | is_strD;
+
+    wire is_aluD = (opcodeD == 4'b0001) | (opcodeD == 4'b1010) | (opcodeD == 4'b1001);
     wire [2:0] regD0 = instructD[8:6];
     wire [2:0] regD1 = instructD[2:0];
+
 
     assign raddr = {regA0, regA1, regB0, regB1, regC0, regC1, regD0, regD1};
 
