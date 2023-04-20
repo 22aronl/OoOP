@@ -1,16 +1,16 @@
 module reservation_station(input clk,
     input [22:0] forwardA, input [22:0] forwardB, input [22:0] forwardC, input [22:0] forwardD,
-    input [56:0] inOperation, output operationUsed, output [40:0] outOperation, output outOperationValid
+    input [56:0] inOperation, output operationUsed, output [41:0] outOperation, output outOperationValid
     );
 
     //Size of the reservation station: 5
     reg [56:0] operation [0:4];
-    reg commited[0:4];
+    reg [0:4]commited;
     //[56] valid, [55:52]operation, [51:46]rob, [45:40]lookA, [39:34] lookB [33:18] valueA, [17:2] value b, [1:0] user
     assign operationUsed = (!commited[0] && !commited[1] && !commited[2] && !commited[3] && !commited[4]) & inOperation[56];
     integer i;
 
-    assign outOperationValid = operation[0][1:0] == 2'b00 | operation[1][1:0] == 2'b00 | operation[2][1:0] == 2'b00 | operation[3][1:0] == 2'b00 | operation[4][1:0] == 2'b00;
+    assign outOperationValid = commited != 5'h00 & (operation[0][1:0] == 2'b00 | operation[1][1:0] == 2'b00 | operation[2][1:0] == 2'b00 | operation[3][1:0] == 2'b00 | operation[4][1:0] == 2'b00);
 
     wire [2:0] operationIndex = operation[0][1:0] == 2'b00 ? 3'b000 :
                                 operation[1][1:0] == 2'b00 ? 3'b001 :

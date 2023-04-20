@@ -352,7 +352,7 @@ module main();
 
     reg [19:0] d2_instructA;
     reg d2_is_ldunitA;
-    reg d2_is_aluunitA;
+    reg d2_is_aluunitA = 1'b0;
     reg d2_is_bunitA;
     reg [15:0] d2_imm5A;
     reg [15:0] d2_pc_offset9A;
@@ -386,7 +386,7 @@ module main();
                                 (d2_rdataA1[6]) ? ROB[d2_rdataA1[5:0]] : 
                                 d2_rdataA1[22:7];
     
-    wire [1:0] d2_useA = {d2_useA_[1] & ROB[d2_lookA0][32] == 1'b0, d2_useA_[0] & ROB[d2_lookA1][32] == 1'b0};
+    wire [1:0] d2_useA = {(d2_useA_[1] & ROB[d2_lookA0][32] == 1'b0 & d2_rdataA0[6] == 1'b1), (d2_useA_[0] & ROB[d2_lookA1][32] == 1'b0 & d2_rdataA1[6] == 1'b1)};
     //TODO: Update ROBcheck with the computed values ehre too
 
     wire [56:0] d2_outputA = {d2_opcodeA, d2_tailA, d2_lookA0, d2_lookA1, d2_valueA0, d2_valueA1, d2_useA, d2_instructA[19]};
@@ -435,11 +435,10 @@ module main();
     //TODO: update rdara indexs
     wire [22:0] d2_rdataB0 = rdata[137:115];
     wire [22:0] d2_rdataB1 = rdata[114:92];
-
-    wire [5:0]d2_lookB0 = writeToRegA && 
-                (writeRegA == regB0) ? d2_tailB : d2_rdataB0[5:0];
-    wire [5:0]d2_lookB1 = writeToRegA && 
-                (writeRegA == regB1) ? d2_tailB : d2_rdataB1[5:0];
+    wire d2_lookB0_ = writeToRegA && (writeRegA == d2_regB0);
+    wire d2_lookB1_ = writeToRegA && (writeRegA == d2_regB1);
+    wire [5:0]d2_lookB0 = d2_lookB0_ ? d2_tailA : d2_rdataB0[5:0];
+    wire [5:0]d2_lookB1 = d2_lookB1_ ? d2_tailA : d2_rdataB1[5:0];
 
     wire [15:0] d2_valueB0 = (d2_instructB[12] | d2_instructB[14] | d2_instructB[10] | d2_instructB[9] | d2_instructB[7] | d2_instructB[3] | d2_instructB[2]) ? d1_pcB :
                                 d2_instructB[13] ? {16{1'b0}} : // ret
@@ -452,7 +451,7 @@ module main();
                                 (d2_rdataB1[6]) ? ROB[d2_rdataB1[5:0]] : 
                                 d2_rdataB1[22:7];
     
-    wire [1:0] d2_useB = {d2_useB_[1] & ROB[d2_lookB0][32] == 1'b0, d2_useB_[0] & ROB[d2_lookB1][32] == 1'b0};
+    wire [1:0] d2_useB = {(d2_useB_[1] & ROB[d2_lookB0][32] == 1'b0 & d2_rdataB0[6] == 1'b1)|d2_lookB0_, (d2_useB_[0] & ROB[d2_lookB1][32] == 1'b0 & d2_rdataB1[6] == 1'b1)|d2_lookB1_};
     //TODO: Update ROBcheck with the computed values ehre too
 
     wire [56:0] d2_outputB = {d2_opcodeB, d2_tailB, d2_lookB0, d2_lookB1, d2_valueB0, d2_valueB1, d2_useB, d2_instructB[19]};
@@ -515,7 +514,7 @@ module main();
                                 (d2_rdataC1[6]) ? ROB[d2_rdataC1[5:0]] : 
                                 d2_rdataC1[22:7];
     
-    wire [1:0] d2_useC = {d2_useC_[1] & ROB[d2_lookC0][32] == 1'b0, d2_useC_[0] & ROB[d2_lookC1][32] == 1'b0};
+    wire [1:0] d2_useC = {d2_useC_[1] & ROB[d2_lookC0][32] == 1'b0 & d2_rdataC0[6] == 1'b1, d2_useC_[0] & ROB[d2_lookC1][32] == 1'b0 & d2_rdataC1[6] == 1'b1};
     //TODO: Update ROBcheck with the computed values ehre too
 
     wire [56:0] d2_outputC = {d2_opcodeC, d2_tailC, d2_lookC0, d2_lookC1, d2_valueC0, d2_valueC1, d2_useC, d2_instructC[19]};
@@ -580,7 +579,7 @@ module main();
                                 (d2_rdataD1[6]) ? ROB[d2_rdataD1[5:0]] : 
                                 d2_rdataD1[22:7];
     
-    wire [1:0] d2_useD = {d2_useD_[1] & ROB[d2_lookD0][32] == 1'b0, d2_useD_[0] & ROB[d2_lookD1][32] == 1'b0};
+    wire [1:0] d2_useD = {d2_useD_[1] & ROB[d2_lookD0][32] == 1'b0 & d2_rdataD0[6] == 1'b1, d2_useD_[0] & ROB[d2_lookD1][32] == 1'b0 & d2_rdataD1[6] == 1'b1};
     //TODO: Update ROBcheck with the computed values ehre too
 
     wire [56:0] d2_outputD = {d2_opcodeD, d2_tailD, d2_lookD0, d2_lookD1, d2_valueD0, d2_valueD1, d2_useD, d2_instructD[19]};
@@ -635,6 +634,9 @@ module main();
             ROBtail <= (ROBtail + 4) % 64;
 
         ROBcheck[d1_tailA] <= {is_trapA, is_storeA, writeToRegA, writeRegA};
+        ROBcheck[d1_tailB] <= {is_trapB, is_storeB, writeToRegB, writeRegB};
+        ROBcheck[d1_tailC] <= {is_trapC, is_storeC, writeToRegC, writeRegC};
+        ROBcheck[d1_tailD] <= {is_trapD, is_storeD, writeToRegD, writeRegD};
     end
 
     always @(posedge clk) begin
@@ -646,7 +648,7 @@ module main();
 
         if(forwardB[22] == 1'b1) begin
             ROB[forwardB[21:16]][31:16] <= forwardB[15:0];
-            ROB_condition_codes[forwardC[21:16]] <= condition_code_B;
+            ROB_condition_codes[forwardB[21:16]] <= condition_code_B;
             ROB[forwardB[21:16]][32] <= 1'b1;
         end
 
@@ -669,7 +671,7 @@ module main();
     // [22] Valid Bit [21:16] Rob instruction [15:0] Rob Value
     wire [22:0] forwardA;
     wire [22:0] forwardB;
-    wire [22:0] forwardC;
+    wire [22:0] forwardC = {23{1'b0}};
     wire [22:0] forwardD;
 
 
@@ -722,7 +724,7 @@ module main();
         .outOperation1(alu_queue_out1)
     );
 
-    wire [40:0] alu_rs_0_out;
+    wire [41:0] alu_rs_0_out;
     wire alu_rs_0_valid;
     reservation_station alu_rs0(
         .clk(clk),
@@ -731,7 +733,7 @@ module main();
         .outOperation(alu_rs_0_out), .outOperationValid(alu_rs_0_valid)
     );
 
-    wire [40:0] alu_rs_1_out;
+    wire [41:0] alu_rs_1_out;
     wire alu_rs_1_valid;
     reservation_station alu_rs1(
         .clk(clk),
@@ -764,7 +766,7 @@ module main();
     );
 
 
-    wire [40:0] bu_rs_out;
+    wire [41:0] bu_rs_out;
     wire bu_rs_valid;
     reservation_station bu_rs(
         .clk(clk),
@@ -785,9 +787,10 @@ module main();
     reg [15:0] alu_value0B;
     reg alu_valid0 = 1'b0;
 
-    wire alu_unknown0 = ~((alu_opcode0 == 4'b0000) || (alu_opcode0 == 4'b0101) || (alu_opcode0 == 4'b1001));
+    //TODO: Add in LEA for alu
+    wire alu_unknown0 = ~((alu_opcode0 == 4'b0001) || (alu_opcode0 == 4'b0101) || (alu_opcode0 == 4'b1001));
 
-    wire [15:0] alu_out0 = (alu_opcode0 == 4'b0000) ? alu_value0A + alu_value0B :           // ADD
+    wire [15:0] alu_out0 = (alu_opcode0 == 4'b0001) ? alu_value0A + alu_value0B :           // ADD
                             (alu_opcode0 == 4'b0101) ? alu_value0A[4] & alu_value0B[4] :    // AND (based on bit 5)
                             (alu_opcode0 == 4'b1001) ? ~alu_value0A :   0;                    // NOT
     
@@ -798,8 +801,8 @@ module main();
     always @(posedge clk) begin
         //TODO: link functional unit A to instruction queue
         alu_valid0 <= alu_rs_0_valid;
-        alu_opcode0 <= alu_rs_0_out[40:37];
-        alu_rob0 <= alu_rs_0_out[36:32];
+        alu_opcode0 <= alu_rs_0_out[41:38];
+        alu_rob0 <= alu_rs_0_out[37:32];
         alu_value0A <= alu_rs_0_out[31:16];
         alu_value0B <= alu_rs_0_out[15:0];
     end
@@ -962,7 +965,7 @@ module main();
     end
 
     wire [5:0] headOfROB = ROBcheck[ROBhead];
-    wire [15:0] ROBa = ROB[ROBhead];
+    wire [32:0] ROBa = ROB[ROBhead];
 
     //ROB Commit Unit
     always @(posedge clk) begin
