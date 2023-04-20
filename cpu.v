@@ -660,11 +660,11 @@ module main();
     wire [15:0]target = is_jmp ? bu_value :
                         is_jsr ?
                             (bu_rflag === 0) ? bu_value :
-                            (bu_pc + 8) + {{5{bu_pcoffset11[10]}}, {bu_pcoffset11[10:0]}} :
-                        is_br ? (bu_pc + 8) + {{5{bu_pcoffset11[10]}}, {bu_pcoffset11[10:0]}}: //I changed this, might not be correct
-                        pc + 8;
+                            (bu_pc + 2) + {{5{bu_pcoffset11[10]}}, {bu_pcoffset11[10:0]}} :
+                        is_br ? (bu_pc + 2) + {{5{bu_pcoffset11[10]}}, {bu_pcoffset11[10:0]}}: //I changed this, might not be correct
+                        pc + 2;
                             
-    wire [15:0]bu_r7 = bu_pc + 8;
+    wire [15:0]bu_r7 = bu_pc + 2;
 
     wire bu_jmp = is_jmp ||
                 is_jsr ||
