@@ -219,10 +219,12 @@ module main();
     //TODO: Storage issues for store commands
     wire [5:0] d2_lookA0 = d2_rdataA0[5:0];
     wire [5:0] d2_lookA1 = d2_rdataA1[5:0];
-    wire [15:0] d2_valueA0 = (d2_instructA[14] | d2_instructA[10] | d2_instructA[9] | d2_instructA[7] | d2_instructA[3] | d2_instructA[2]) ? d1_pcA :
+    wire [15:0] d2_valueA0 = (d2_instructA[12] | d2_instructA[14] | d2_instructA[10] | d2_instructA[9] | d2_instructA[7] | d2_instructA[3] | d2_instructA[2]) ? d1_pcA :
+                                d2_instructA[13] ? {16{1'b0}} : // ret
                                 d2_rdataA0[6] ? ROB[d2_rdataA0[5:0]] : 
                                 d2_rdataA0[22:7];
-    wire [15:0] d2_valueA1 = (d2_instructA[14] | d2_instructA[10] | d2_instructA[9] | d2_instructA[7] | d2_instructA[3] | d2_instructA[2]) ? d2_pc_offset9A : 
+    wire [15:0] d2_valueA1 = (d2_instructA[12] | d2_instructA[14] | d2_instructA[10] | d2_instructA[9] | d2_instructA[7] | d2_instructA[3] | d2_instructA[2]) ? d2_pc_offset9A : 
+                                d2_instructA[11] ? {16{1'b0}} : // jsrr
                                 (d2_instructA[17] | d2_instructA[15]) ? d2_imm5A :
                                 (d2_instructA[8]) ? d2_offset6A :
                                 (d2_rdataA1[6]) ? ROB[d2_rdataA1[5:0]] : 
@@ -490,6 +492,24 @@ module main();
     end
 
 
+    wire [56:0] bu_feederA;
+    wire [56:0] bu_feederB;
+    wire [56:0] bu_feederC;
+    wire [56:0] bu_feederD;
+    wire bu_feedervalidA;
+    wire bu_feedervalidB;
+    wire bu_feedervalidC;
+    wire bu_feedervalidD;
+    queue_feeder bu_feeder(
+        .inOperationA(d2_outputA), .validA(d2_is_bunitA),
+        .inOperationB(d2_outputB), .validB(d2_is_bunitB),
+        .inOperationC(d2_outputC), .validC(d2_is_bunitC),
+        .inOperationD(d2_outputD), .validD(d2_is_bunitD),
+        .outOperationA(bu_feederA), .outValidA(bu_feedervalidA),
+        .outOperationB(bu_feederB), .outValidB(bu_feedervalidB),
+        .outOperationC(bu_feederC), .outValidC(bu_feedervalidC),
+        .outOperationD(bu_feederD), .outValidD(bu_feedervalidD)
+    );
 
     // Branch Unit: uses forwardC
     reg bu_valid;
