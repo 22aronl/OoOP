@@ -1,20 +1,20 @@
 [*]
 [*] GTKWave Analyzer v3.3.108 (w)1999-2020 BSI
-[*] Thu Apr 20 23:20:35 2023
+[*] Fri Apr 21 06:59:32 2023
 [*]
 [dumpfile] "C:\Users\Aaron Lo\Documents\cs429h\OOOP\t0.vcd"
-[dumpfile_mtime] "Thu Apr 20 23:20:14 2023"
-[dumpfile_size] 61797
+[dumpfile_mtime] "Fri Apr 21 06:58:52 2023"
+[dumpfile_size] 58667
 [savefile] "C:\Users\Aaron Lo\Documents\cs429h\OOOP\waveform.gtkw"
-[timestart] 0
-[size] 1542 844
+[timestart] 2640
+[size] 1371 644
 [pos] -1 -1
-*-11.000000 1240 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-11.000000 3270 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] main.
 [sst_width] 254
 [signals_width] 198
 [sst_expanded] 1
-[sst_vpaned_height] 308
+[sst_vpaned_height] 340
 @28
 main.clk
 @22
@@ -220,7 +220,7 @@ main.d2_lookB0[5:0]
 main.regB0[2:0]
 @1401200
 -decode 2
-@c00201
+@c00200
 -alu_queue
 @28
 main.alu_queue.flush
@@ -265,7 +265,7 @@ main.alu_queue.inReady1
 @22
 main.alu_queue.head[5:0]
 main.alu_queue.tail[5:0]
-@1401201
+@1401200
 -alu_queue
 @c00200
 -decodeA
@@ -430,5 +430,100 @@ main.alu_queue_out0[56:0]
 main.alu_queue_out1[56:0]
 @28
 main.alu_queue_used[1:0]
+@c00200
+-alu_rs_0
+@22
+main.alu_rs0.commited[0:4]
+main.alu_rs0.inOperation[56:0]
+@28
+main.alu_rs0.operationIndex[2:0]
+main.alu_rs0.operationUsed
+main.alu_rs0.outOperationValid
+@22
+main.alu_rs0.outOperation[41:0]
+@1401200
+-alu_rs_0
+@800200
+-alu_rs_1
+@c00022
+main.alu_rs1.commited[0:4]
+@28
+(0)main.alu_rs1.commited[0:4]
+(1)main.alu_rs1.commited[0:4]
+(2)main.alu_rs1.commited[0:4]
+(3)main.alu_rs1.commited[0:4]
+(4)main.alu_rs1.commited[0:4]
+@1401200
+-group_end
+@c00022
+main.alu_rs1.inOperation[56:0]
+@28
+(0)main.alu_rs1.inOperation[56:0]
+(1)main.alu_rs1.inOperation[56:0]
+(2)main.alu_rs1.inOperation[56:0]
+(3)main.alu_rs1.inOperation[56:0]
+(4)main.alu_rs1.inOperation[56:0]
+(5)main.alu_rs1.inOperation[56:0]
+(6)main.alu_rs1.inOperation[56:0]
+(7)main.alu_rs1.inOperation[56:0]
+(8)main.alu_rs1.inOperation[56:0]
+(9)main.alu_rs1.inOperation[56:0]
+(10)main.alu_rs1.inOperation[56:0]
+(11)main.alu_rs1.inOperation[56:0]
+(12)main.alu_rs1.inOperation[56:0]
+(13)main.alu_rs1.inOperation[56:0]
+(14)main.alu_rs1.inOperation[56:0]
+(15)main.alu_rs1.inOperation[56:0]
+(16)main.alu_rs1.inOperation[56:0]
+(17)main.alu_rs1.inOperation[56:0]
+(18)main.alu_rs1.inOperation[56:0]
+(19)main.alu_rs1.inOperation[56:0]
+(20)main.alu_rs1.inOperation[56:0]
+(21)main.alu_rs1.inOperation[56:0]
+(22)main.alu_rs1.inOperation[56:0]
+(23)main.alu_rs1.inOperation[56:0]
+(24)main.alu_rs1.inOperation[56:0]
+(25)main.alu_rs1.inOperation[56:0]
+(26)main.alu_rs1.inOperation[56:0]
+(27)main.alu_rs1.inOperation[56:0]
+(28)main.alu_rs1.inOperation[56:0]
+(29)main.alu_rs1.inOperation[56:0]
+(30)main.alu_rs1.inOperation[56:0]
+(31)main.alu_rs1.inOperation[56:0]
+(32)main.alu_rs1.inOperation[56:0]
+(33)main.alu_rs1.inOperation[56:0]
+(34)main.alu_rs1.inOperation[56:0]
+(35)main.alu_rs1.inOperation[56:0]
+(36)main.alu_rs1.inOperation[56:0]
+(37)main.alu_rs1.inOperation[56:0]
+(38)main.alu_rs1.inOperation[56:0]
+(39)main.alu_rs1.inOperation[56:0]
+(40)main.alu_rs1.inOperation[56:0]
+(41)main.alu_rs1.inOperation[56:0]
+(42)main.alu_rs1.inOperation[56:0]
+(43)main.alu_rs1.inOperation[56:0]
+(44)main.alu_rs1.inOperation[56:0]
+(45)main.alu_rs1.inOperation[56:0]
+(46)main.alu_rs1.inOperation[56:0]
+(47)main.alu_rs1.inOperation[56:0]
+(48)main.alu_rs1.inOperation[56:0]
+(49)main.alu_rs1.inOperation[56:0]
+(50)main.alu_rs1.inOperation[56:0]
+(51)main.alu_rs1.inOperation[56:0]
+(52)main.alu_rs1.inOperation[56:0]
+(53)main.alu_rs1.inOperation[56:0]
+(54)main.alu_rs1.inOperation[56:0]
+(55)main.alu_rs1.inOperation[56:0]
+(56)main.alu_rs1.inOperation[56:0]
+@1401200
+-group_end
+@28
+main.alu_rs1.operationIndex[2:0]
+main.alu_rs1.operationUsed
+main.alu_rs1.outOperationValid
+@22
+main.alu_rs1.outOperation[41:0]
+@1000200
+-alu_rs_1
 [pattern_trace] 1
 [pattern_trace] 0

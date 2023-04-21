@@ -63,12 +63,15 @@ module main();
     wire [23:0] raddr;
     wire [183:0] rdata;
 
-    wire wen0;
-    wire wen1;
-    wire [2:0]waddr0;
-    wire [2:0]waddr1;
-    wire [15:0]wdata0;
-    wire [15:0]wdata1;
+    wire wen0 = cu_wen0;
+    wire wen1 = cu_wen1;
+    wire wen2 = cu_wen2;
+    wire [2:0]waddr0 = cu_waddr0;
+    wire [2:0]waddr1 = cu_waddr1;
+    wire [2:0]waddr2 = cu_waddr2;
+    wire [15:0]wdata0 = cu_wdata0;
+    wire [15:0]wdata1 = cu_wdata1;
+    wire [15:0]wdata2 = cu_wdata2;
 
     //Negative, Zero, Positive
     // [9:7] flags, [6] busy, [5:0] ROB index
@@ -102,8 +105,13 @@ module main();
         .wdata0(wdata0),
         .wen1(wen1),
         .waddr1(waddr1),
-        .wdata1(wdata1)
+        .wdata1(wdata1),
+        .wen2(wen2),
+        .waddr2(waddr2),
+        .wdata2(wdata2),
+        .trap_read(trap_read)
     );
+
 
     //decode 1
     reg d1_pcA;
@@ -139,9 +147,9 @@ module main();
     wire is_stiA = (opcodeA === 4'b1011);
     wire is_strA = (opcodeA === 4'b0111);
     wire is_trapA = (opcodeA === 4'b1111);
-    wire is_validA = is_addrA | is_addiA | is_andrA | is_andiA | is_brA | 
+    wire is_validA = !flush && (is_addrA | is_addiA | is_andrA | is_andiA | is_brA | 
                         is_jmpA | is_jsrA | is_jsrrA | is_ldA | is_ldiA | 
-                        is_ldrA | is_leaA | is_notA | is_retA | is_retiA | is_stA | is_stiA | is_strA | is_trapA;
+                        is_ldrA | is_leaA | is_notA | is_retA | is_retiA | is_stA | is_stiA | is_strA | is_trapA);
 
     wire [19:0] d1_instructA = {is_validA, is_addrA, is_addiA, is_andrA, is_andiA, is_brA, 
                                     is_jmpA, is_jsrA, is_jsrrA, is_ldA, is_ldiA, 
@@ -150,14 +158,14 @@ module main();
 
 
     wire is_ldunitA = is_ldA | is_ldiA | is_ldrA | is_stA | is_stiA | is_strA;
-    wire is_aluunitA = is_addrA | is_addiA | is_andiA | is_notA | is_leaA;
+    wire is_aluunitA = is_addrA | is_addiA | is_andiA | is_notA | is_leaA | is_trapA; // added is_trapA to alu
 
     wire [15:0] imm5A = {{12{instructA[4]}}, instructA[3:0]};
-    wire [15:0] pc_offset9A = {{8{instructA[8]}}, instructA[7:0]};
+    wire [15:0] pc_offset11A = {{5{instructA[10]}}, instructA[10:0]};
     wire [15:0] offset6A = {{11{instructA[5]}}, instructA[4:0]};
 
-    wire useA0 = is_addrA | is_addiA | is_andrA | is_andiA | is_jmpA | is_jsrrA | is_ldrA | is_notA;
-    wire useA1 = is_addrA | is_andrA;
+    wire useA0 = is_addrA | is_addiA | is_andrA | is_andiA | is_jmpA | is_jsrrA | is_ldrA | is_notA | is_stA | is_stiA | is_strA;
+    wire useA1 = is_addrA | is_andrA | is_strA;
     wire [1:0] useA = {useA0, useA1};
 
     wire writeToRegA = is_addrA | is_addiA | is_andrA | is_andiA | is_ldA | is_ldiA | is_ldrA | is_leaA | is_notA;
@@ -165,8 +173,8 @@ module main();
     wire is_storeA = is_stA | is_stiA | is_strA;
 
     wire is_aluA = (opcodeA == 4'b0001) | (opcodeA == 4'b1010) | (opcodeA == 4'b1001);
-    wire [2:0] regA0 = instructA[8:6];
-    wire [2:0] regA1 = instructA[2:0];
+    wire [2:0] regA0 = (is_storeA) ? writeRegA : instructA[8:6];
+    wire [2:0] regA1 = is_strA ? instructA[8:6] : instructA[2:0];
 
 
 
@@ -191,9 +199,9 @@ module main();
     wire is_stiB = (opcodeB === 4'b1011);
     wire is_strB = (opcodeB === 4'b0111);
     wire is_trapB = (opcodeB === 4'b1111);
-    wire is_validB = is_addrB | is_addiB | is_andrB | is_andiB | is_brB | 
+    wire is_validB = !flush && (is_addrB | is_addiB | is_andrB | is_andiB | is_brB | 
                         is_jmpB | is_jsrB | is_jsrrB | is_ldB | is_ldiB | 
-                        is_ldrB | is_leaB | is_notB | is_retB | is_retiB | is_stB | is_stiB | is_strB | is_trapB;
+                        is_ldrB | is_leaB | is_notB | is_retB | is_retiB | is_stB | is_stiB | is_strB | is_trapB);
 
     wire [19:0] d1_instructB = {is_validB, is_addrB, is_addiB, is_andrB, is_andiB, is_brB, 
                                     is_jmpB, is_jsrB, is_jsrrB, is_ldB, is_ldiB, 
@@ -202,10 +210,10 @@ module main();
 
 
     wire is_ldunitB = is_ldB | is_ldiB | is_ldrB | is_stB | is_stiB | is_strB;
-    wire is_aluunitB = is_addrB | is_addiB | is_andiB | is_notB | is_leaB;
+    wire is_aluunitB = is_addrB | is_addiB | is_andiB | is_notB | is_leaB | is_trapB;
 
     wire [15:0] imm5B = {{12{instructB[4]}}, instructB[3:0]};
-    wire [15:0] pc_offset9B = {{8{instructB[8]}}, instructB[7:0]};
+    wire [15:0] pc_offset11B = {{8{instructB[8]}}, instructB[7:0]};
     wire [15:0] offset6B = {{11{instructB[5]}}, instructB[4:0]};
 
     wire useB0 = is_addrB | is_addiB | is_andrB | is_andiB | is_jmpB | is_jsrrB | is_ldrB | is_notB;
@@ -216,7 +224,7 @@ module main();
     wire [2:0] writeRegB = instructB[11:9];
     wire is_storeB = is_stB | is_stiB | is_strB;
 
-    wire is_aluB = (opcodeB == 4'b0001) | (opcodeB == 4'b1010) | (opcodeB == 4'b1001);
+    wire is_aluB = (opcodeB == 4'b0001) | (opcodeB == 4'b1010) | (opcodeB == 4'b1001); // ?????????? where is this used
     wire [2:0] regB0 = instructB[8:6];
     wire [2:0] regB1 = instructB[2:0];
 
@@ -243,9 +251,9 @@ module main();
     wire is_stiC = (opcodeC === 4'b1011);
     wire is_strC = (opcodeC === 4'b0111);
     wire is_trapC = (opcodeC === 4'b1111);
-    wire is_validC = is_addrC | is_addiC | is_andrC | is_andiC | is_brC | 
+    wire is_validC = !flush && (is_addrC | is_addiC | is_andrC | is_andiC | is_brC | 
                         is_jmpC | is_jsrC | is_jsrrC | is_ldC | is_ldiC | 
-                        is_ldrC | is_leaC | is_notC | is_retC | is_retiC | is_stC | is_stiC | is_strC | is_trapC;
+                        is_ldrC | is_leaC | is_notC | is_retC | is_retiC | is_stC | is_stiC | is_strC | is_trapC);
 
     wire [19:0] d1_instructC = {is_validC, is_addrC, is_addiC, is_andrC, is_andiC, is_brC, 
                                     is_jmpC, is_jsrC, is_jsrrC, is_ldC, is_ldiC, 
@@ -254,14 +262,14 @@ module main();
 
 
     wire is_ldunitC = is_ldC | is_ldiC | is_ldrC | is_stC | is_stiC | is_strC;
-    wire is_aluunitC = is_addrC | is_addiC | is_andiC | is_notC | is_leaC;
+    wire is_aluunitC = is_addrC | is_addiC | is_andiC | is_notC | is_leaC | is_trapC;
 
     wire [15:0] imm5C = {{12{instructC[4]}}, instructC[3:0]};
-    wire [15:0] pc_offset9C = {{8{instructC[8]}}, instructC[7:0]};
+    wire [15:0] pc_offset11C = {{5{instructC[10]}}, instructC[10:0]};
     wire [15:0] offset6C = {{11{instructC[5]}}, instructC[4:0]};
 
     wire useC0 = is_addrC | is_addiC | is_andrC | is_andiC | is_jmpC | is_jsrrC | is_ldrC | is_notC;
-    wire useC1 = is_addrC | is_andrC;
+    wire useC1 = is_addrC | is_andrC | is_brC;
     wire [1:0] useC = {useC0, useC1};
 
     wire writeToRegC = is_addrC | is_addiC | is_andrC | is_andiC | is_ldC | is_ldiC | is_ldrC | is_leaC | is_notC;
@@ -296,9 +304,9 @@ module main();
     wire is_stiD = (opcodeD === 4'b1011);
     wire is_strD = (opcodeD === 4'b0111);
     wire is_trapD = (opcodeD === 4'b1111);
-    wire is_validD = is_addrD | is_addiD | is_andrD | is_andiD | is_brD | 
+    wire is_validD = !flush && (is_addrD | is_addiD | is_andrD | is_andiD | is_brD | 
                         is_jmpD | is_jsrD | is_jsrrD | is_ldD | is_ldiD | 
-                        is_ldrD | is_leaD | is_notD | is_retD | is_retiD | is_stD | is_stiD | is_strD | is_trapD;
+                        is_ldrD | is_leaD | is_notD | is_retD | is_retiD | is_stD | is_stiD | is_strD | is_trapD);
 
     wire [19:0] d1_instructD = {is_validD, is_addrD, is_addiD, is_andrD, is_andiD, is_brD, 
                                     is_jmpD, is_jsrD, is_jsrrD, is_ldD, is_ldiD, 
@@ -307,10 +315,10 @@ module main();
 
 
     wire is_ldunitD = is_ldD | is_ldiD | is_ldrD | is_stD | is_stiD | is_strD;
-    wire is_aluunitD = is_addrD | is_addiD | is_andiD | is_notD | is_leaD;
+    wire is_aluunitD = is_addrD | is_addiD | is_andiD | is_notD | is_leaD | is_trapD;
 
     wire [15:0] imm5D = {{12{instructD[4]}}, instructD[3:0]};
-    wire [15:0] pc_offset9D = {{8{instructD[8]}}, instructD[7:0]};
+    wire [15:0] pc_offset11D = {{5{instructD[10]}}, instructD[10:0]};
     wire [15:0] offset6D = {{11{instructD[5]}}, instructD[4:0]};
 
     wire useD0 = is_addrD | is_addiD | is_andrD | is_andiD | is_jmpD | is_jsrrD | is_ldrD | is_notD;
@@ -354,8 +362,9 @@ module main();
     reg d2_is_ldunitA;
     reg d2_is_aluunitA = 1'b0;
     reg d2_is_bunitA;
+    reg d2_is_brA;
     reg [15:0] d2_imm5A;
-    reg [15:0] d2_pc_offset9A;
+    reg [15:0] d2_pc_offset11A;
     reg [15:0] d2_offset6A;
     reg d2_writeToRegA;
     reg [2:0] d2_writeRegA;
@@ -374,12 +383,13 @@ module main();
     
     //TODO: Storage issues for store commands
     wire [5:0] d2_lookA0 = d2_rdataA0[5:0];
-    wire [5:0] d2_lookA1 = d2_rdataA1[5:0];
-    wire [15:0] d2_valueA0 = (d2_instructA[12] | d2_instructA[14] | d2_instructA[10] | d2_instructA[9] | d2_instructA[7] | d2_instructA[3] | d2_instructA[2]) ? d1_pcA :
+    wire [5:0] d2_lookA1 = d2_is_brA ? (d2_tailA - 1) % 64:
+                            d2_rdataA1[5:0];
+    wire [15:0] d2_valueA0 = (d2_instructA[12] | d2_instructA[14] | d2_instructA[10] | d2_instructA[9] | d2_instructA[7]) ? d1_pcA :
                                 d2_instructA[13] ? {16{1'b0}} : // ret
                                 d2_rdataA0[6] ? ROB[d2_rdataA0[5:0]] : 
                                 d2_rdataA0[22:7];
-    wire [15:0] d2_valueA1 = (d2_instructA[12] | d2_instructA[14] | d2_instructA[10] | d2_instructA[9] | d2_instructA[7] | d2_instructA[3] | d2_instructA[2]) ? d2_pc_offset9A : 
+    wire [15:0] d2_valueA1 = (d2_instructA[12] | d2_instructA[14] | d2_instructA[10] | d2_instructA[9] | d2_instructA[7] | d2_instructA[0]) ? d2_pc_offset11A : 
                                 d2_instructA[11] ? {16{1'b0}} : // jsrr
                                 (d2_instructA[17] | d2_instructA[15]) ? d2_imm5A :
                                 (d2_instructA[8]) ? d2_offset6A :
@@ -400,7 +410,7 @@ module main();
         d2_is_ldunitA <= is_ldunitA;
         d2_is_aluunitA <= is_aluunitA;
         d2_imm5A <= imm5A;
-        d2_pc_offset9A <= pc_offset9A;
+        d2_pc_offset11A <= pc_offset11A;
         d2_offset6A <= offset6A;
         d2_writeToRegA <= writeToRegA;
         d2_writeRegA <= writeRegA;
@@ -416,7 +426,7 @@ module main();
     reg [19:0] d2_instructB;
 
     reg [15:0] d2_imm5B;
-    reg [15:0] d2_pc_offset9B;
+    reg [15:0] d2_pc_offset11B;
     reg [15:0] d2_offset6B;
     reg d2_writeToRegB;
     reg [2:0] d2_writeRegB;
@@ -426,6 +436,8 @@ module main();
     reg [2:0] d2_regB0;
     reg [2:0] d2_regB1;
     reg [1:0] d2_useB_;
+    
+    reg d2_is_brB;
 
     reg d2_is_aluunitB = 1'b0;
     reg d2_is_ldunitB = 1'b0;
@@ -438,13 +450,14 @@ module main();
     wire d2_lookB0_ = writeToRegA && (writeRegA == d2_regB0);
     wire d2_lookB1_ = writeToRegA && (writeRegA == d2_regB1);
     wire [5:0]d2_lookB0 = d2_lookB0_ ? d2_tailA : d2_rdataB0[5:0];
-    wire [5:0]d2_lookB1 = d2_lookB1_ ? d2_tailA : d2_rdataB1[5:0];
+    wire [5:0]d2_lookB1 = d2_is_brB ? (d2_tailB - 1) % 64:
+                            d2_lookB1_ ? d2_tailA : d2_rdataB1[5:0];
 
     wire [15:0] d2_valueB0 = (d2_instructB[12] | d2_instructB[14] | d2_instructB[10] | d2_instructB[9] | d2_instructB[7] | d2_instructB[3] | d2_instructB[2]) ? d1_pcB :
                                 d2_instructB[13] ? {16{1'b0}} : // ret
                                 d2_rdataB0[6] ? ROB[d2_rdataB0[5:0]] : 
                                 d2_rdataB0[22:7];
-    wire [15:0] d2_valueB1 = (d2_instructB[12] | d2_instructB[14] | d2_instructB[10] | d2_instructB[9] | d2_instructB[7] | d2_instructB[3] | d2_instructB[2]) ? d2_pc_offset9B : 
+    wire [15:0] d2_valueB1 = (d2_instructB[12] | d2_instructB[14] | d2_instructB[10] | d2_instructB[9] | d2_instructB[7] | d2_instructB[3] | d2_instructB[2] | d2_instructB[0]) ? d2_pc_offset11B : 
                                 d2_instructB[11] ? {16{1'b0}} : // jsrr
                                 (d2_instructB[17] | d2_instructB[15]) ? d2_imm5B :
                                 (d2_instructB[8]) ? d2_offset6B :
@@ -463,7 +476,7 @@ module main();
         d2_is_ldunitB <= is_ldunitB;
         d2_is_aluunitB <= is_aluunitB;
         d2_imm5B <= imm5B;
-        d2_pc_offset9B <= pc_offset9B;
+        d2_pc_offset11B <= pc_offset11B;
         d2_offset6B <= offset6B;
         d2_writeToRegB <= writeToRegB;
         d2_writeRegB <= writeRegB;
@@ -478,7 +491,7 @@ module main();
     reg [19:0] d2_instructC;
 
     reg [15:0] d2_imm5C;
-    reg [15:0] d2_pc_offset9C;
+    reg [15:0] d2_pc_offset11C;
     reg [15:0] d2_offset6C;
     reg d2_writeToRegC;
     reg [2:0] d2_writeRegC;
@@ -488,6 +501,8 @@ module main();
     reg [5:0] d2_tailC; //ROB
     reg [3:0] d2_opcodeC; //Operation
 
+    reg d2_is_brC;
+
     reg [1:0] d2_useC_;
     wire [22:0] d2_rdataC0 = rdata[91:69];
     wire [22:0] d2_rdataC1 = rdata[68:46];
@@ -496,18 +511,22 @@ module main();
     reg d2_is_ldunitC = 1'b0;
     reg d2_is_bunitC = 1'b0;
 
-    wire [5:0]d2_lookC0 = writeToRegA && 
+    wire [5:0]d2_lookC0 = writeToRegB && 
                 (writeRegB == regC0) ? d2_tailB :                   // check in priority order
-                (writeRegA == regC0) ? d2_tailA : d2_rdataC0[5:0];
-    wire [5:0]d2_lookC1 = writeToRegA && 
+                writeToRegA && (writeRegA == regC0) ? d2_tailA : d2_rdataC0[5:0];
+    wire [5:0]d2_lookC1 = d2_is_brC ? (d2_tailC - 1) % 64: // this is the ROB idx of the previous instruction
+                writeToRegB && 
                 (writeRegB == regC0) ? d2_tailB : 
-                (writeRegA == regC0) ? d2_tailA : d2_rdataC1[5:0];
+                writeToRegA && (writeRegA == regC0) ? d2_tailA : d2_rdataC1[5:0];
+
+                //TODO: WHY??
+
 
     wire [15:0] d2_valueC0 = (d2_instructC[12] | d2_instructC[14] | d2_instructC[10] | d2_instructC[9] | d2_instructC[7] | d2_instructC[3] | d2_instructC[2]) ? d1_pcC :
                                 d2_instructC[13] ? {16{1'b0}} : // ret
                                 d2_rdataC0[6] ? ROB[d2_rdataC0[5:0]] : 
                                 d2_rdataC0[22:7];
-    wire [15:0] d2_valueC1 = (d2_instructC[12] | d2_instructC[14] | d2_instructC[10] | d2_instructC[9] | d2_instructC[7] | d2_instructC[3] | d2_instructC[2]) ? d2_pc_offset9C : 
+    wire [15:0] d2_valueC1 = (d2_instructC[12] | d2_instructC[14] | d2_instructC[10] | d2_instructC[9] | d2_instructC[7] | d2_instructC[3] | d2_instructC[2] | d2_instructC[0]) ? d2_pc_offset11C : 
                                 d2_instructC[11] ? {16{1'b0}} : // jsrr
                                 (d2_instructC[17] | d2_instructC[15]) ? d2_imm5C :
                                 (d2_instructC[8]) ? d2_offset6C :
@@ -526,10 +545,14 @@ module main();
         d2_is_ldunitC <= is_ldunitC;
         d2_is_aluunitC <= is_aluunitC;
         d2_imm5C <= imm5C;
-        d2_pc_offset9C <= pc_offset9C;
+        d2_pc_offset11C <= pc_offset11C;
         d2_offset6C <= offset6C;
         d2_writeToRegC <= writeToRegC;
         d2_writeRegC <= writeRegC;
+        d2_is_brA <= is_brA;
+        d2_is_brB <= is_brB;
+        d2_is_brC <= is_brC;
+        d2_is_brD <= is_brD;
 
         d2_is_aluC <= is_aluC;
         d2_regC0 <= regC0;
@@ -542,7 +565,7 @@ module main();
     reg [19:0] d2_instructD;
 
     reg [15:0] d2_imm5D;
-    reg [15:0] d2_pc_offset9D;
+    reg [15:0] d2_pc_offset11D;
     reg [15:0] d2_offset6D;
     reg d2_writeToRegD;
     reg [2:0] d2_writeRegD;
@@ -556,6 +579,8 @@ module main();
     wire [22:0] d2_rdataD0 = rdata[45:23];
     wire [22:0] d2_rdataD1 = rdata[22:0];
 
+    reg d2_is_brD;
+
     reg d2_is_aluunitD = 1'b0;
     reg d2_is_ldunitD = 1'b0;
     reg d2_is_bunitD = 1'b0;
@@ -564,7 +589,8 @@ module main();
                 writeToRegB && (writeRegB == regD0) ? d2_tailB :
                 writeToRegA && (writeRegA == regD0) ? d2_tailA : d2_rdataD0[5:0];
 
-    wire [5:0]d2_lookD1 = writeToRegC && (writeRegC == regD1) ? d2_tailC :
+    wire [5:0]d2_lookD1 = d2_is_brD ? (d2_tailD - 1) % 64:
+                writeToRegC && (writeRegC == regD1) ? d2_tailC :
                 writeToRegB && (writeRegB == regD1) ? d2_tailB :
                 writeToRegA && (writeRegA == regD1) ? d2_tailA : d2_rdataD1[5:0];
 
@@ -572,7 +598,7 @@ module main();
                                 d2_instructD[13] ? {16{1'b0}} : // ret
                                 d2_rdataD0[6] ? ROB[d2_rdataD0[5:0]] : 
                                 d2_rdataD0[22:7];
-    wire [15:0] d2_valueD1 = (d2_instructD[12] | d2_instructD[14] | d2_instructD[10] | d2_instructD[9] | d2_instructD[7] | d2_instructD[3] | d2_instructD[2]) ? d2_pc_offset9D : 
+    wire [15:0] d2_valueD1 = (d2_instructD[12] | d2_instructD[14] | d2_instructD[10] | d2_instructD[9] | d2_instructD[7] | d2_instructD[3] | d2_instructD[2] | d2_instructD[0]) ? d2_pc_offset11D : 
                                 d2_instructD[11] ? {16{1'b0}} : // jsrr
                                 (d2_instructD[17] | d2_instructD[15]) ? d2_imm5D :
                                 (d2_instructD[8]) ? d2_offset6D :
@@ -591,7 +617,7 @@ module main();
         d2_is_ldunitD <= is_ldunitD;
         d2_is_aluunitD <= is_aluunitD;
         d2_imm5D <= imm5D;
-        d2_pc_offset9D <= pc_offset9D;
+        d2_pc_offset11D <= pc_offset11D;
         d2_offset6D <= offset6D;
         d2_writeToRegD <= writeToRegD;
         d2_writeRegD <= writeRegD;
@@ -615,8 +641,8 @@ module main();
     //TODO: Add support for the condition registers
     //Ready Bit, Value, PC (for piping into cache & branch checking for now)
     reg [32:0] ROB[0:63];
-    //Addition check for: [5] isTrap, [4] IsStore, [3] IsWriteToReg, [2:0] RegNum
-    reg [5:0] ROBcheck[0:63];
+    //Addition check for: [11:6] offset6  [6] take jump, [5] isTrap, [4] IsStore, [3] IsWriteToReg, [2:0] RegNum
+    reg [6:0] ROBcheck[0:63];
     reg [2:0] ROB_condition_codes[0:63]; // N, Z, P
     reg [5:0] ROBhead = 5'h00;
     reg [5:0] ROBtail = 5'h00;
@@ -633,10 +659,10 @@ module main();
         if(is_validA)
             ROBtail <= (ROBtail + 4) % 64;
 
-        ROBcheck[d1_tailA] <= {is_trapA, is_storeA, writeToRegA, writeRegA};
-        ROBcheck[d1_tailB] <= {is_trapB, is_storeB, writeToRegB, writeRegB};
-        ROBcheck[d1_tailC] <= {is_trapC, is_storeC, writeToRegC, writeRegC};
-        ROBcheck[d1_tailD] <= {is_trapD, is_storeD, writeToRegD, writeRegD};
+        ROBcheck[d1_tailA] <= {offset6A, is_trapA, is_storeA, writeToRegA, writeRegA};
+        ROBcheck[d1_tailB] <= {offset6B, is_trapB, is_storeB, writeToRegB, writeRegB};
+        ROBcheck[d1_tailC] <= {offset6C, is_trapC, is_storeC, writeToRegC, writeRegC};
+        ROBcheck[d1_tailD] <= {offset6D, is_trapD, is_storeD, writeToRegD, writeRegD};
     end
 
     always @(posedge clk) begin
@@ -671,7 +697,7 @@ module main();
     // [22] Valid Bit [21:16] Rob instruction [15:0] Rob Value
     wire [22:0] forwardA;
     wire [22:0] forwardB;
-    wire [22:0] forwardC = {23{1'b0}};
+    wire [22:0] forwardC;
     wire [22:0] forwardD;
 
 
@@ -729,7 +755,7 @@ module main();
     reservation_station alu_rs0(
         .clk(clk),
         .forwardA(forwardA), .forwardB(forwardB), .forwardC(forwardC), .forwardD(forwardD),
-        .inOperation(alu_queue_out0), .operationUsed(alu_queue_used_0),
+        .inOperation(alu_queue_out0), .operationUsed(alu_queue_used_0), .flush(flush),
         .outOperation(alu_rs_0_out), .outOperationValid(alu_rs_0_valid)
     );
 
@@ -738,7 +764,7 @@ module main();
     reservation_station alu_rs1(
         .clk(clk),
         .forwardA(forwardA), .forwardB(forwardB), .forwardC(forwardC), .forwardD(forwardD),
-        .inOperation(alu_queue_out1), .operationUsed(alu_queue_used_1),
+        .inOperation(alu_queue_out1), .operationUsed(alu_queue_used_1), .flush(flush),
         .outOperation(alu_rs_1_out), .outOperationValid(alu_rs_1_valid)
     );
 
@@ -771,7 +797,7 @@ module main();
     reservation_station bu_rs(
         .clk(clk),
         .forwardA(forwardA), .forwardB(forwardB), .forwardC(forwardC), .forwardD(forwardD),
-        .inOperation(buq_out), .operationUsed(buq_used),
+        .inOperation(buq_out), .operationUsed(buq_used), .flush(flush),
         .outOperation(bu_rs_out), .outOperationValid(bu_rs_valid)
     );
 
@@ -792,7 +818,9 @@ module main();
 
     wire [15:0] alu_out0 = (alu_opcode0 == 4'b0001) ? alu_value0A + alu_value0B :           // ADD
                             (alu_opcode0 == 4'b0101) ? alu_value0A[4] & alu_value0B[4] :    // AND (based on bit 5)
-                            (alu_opcode0 == 4'b1001) ? ~alu_value0A :   0;                    // NOT
+                            (alu_opcode0 == 4'b1001) ? ~alu_value0A :                       // NOT
+                            (alu_opcode0 == 4'b1111) ?  alu_value0B[7:0] :                   // TRAP
+                               0;
     
     assign forwardA = {alu_valid0, alu_rob0, alu_out0};
     wire [2:0] condition_code_A = (alu_opcode0 == 4'b0001) | (alu_opcode0 == 4'b0101) | (alu_opcode0 == 4'b1001) ?
@@ -819,6 +847,7 @@ module main();
     wire [15:0] alu_out1 = (alu_opcode1 == 4'b0000) ? alu_value1A + alu_value1B :            // ADD
                             (alu_opcode1 == 4'b0101) ? alu_value1A[4] & alu_value1B[4] :    // AND (based on bit 5)
                             (alu_opcode1 == 4'b1001) ? ~alu_value1A :                       // NOT
+                            (alu_opcode0 == 4'b1111) ?  alu_value1B[7:0] :                    // TRAP
                             0;
     assign forwardB = {alu_valid1, alu_rob1, alu_out1};
     wire [2:0] condition_code_B = (alu_opcode1 == 4'b0001) | (alu_opcode1 == 4'b0101) | (alu_opcode1 == 4'b1001) ?
@@ -858,35 +887,44 @@ module main();
 
     reg [3:0] bu_opcode;
     reg [5:0] bu_rob;
-    reg [31:0] bu_value;
-    reg [15:0] bu_pcoffset11;
-    reg bu_rflag;
-    reg [15:0] bu_pc;
-    reg bu_valid0 = 1'b0;
-    
-    wire is_jmp = (bu_opcode == 4'b1100);
-    wire is_jsr = (bu_opcode == 4'b0100);
-    wire is_br = (bu_opcode == 4'b0000);
-    wire [15:0] bu_pc_offest = {{5{bu_pcoffset11[10]}}, bu_pcoffset11[10:0]};
-    wire [15:0]target = is_jmp ? bu_value :
-                        is_jsr ?
-                            (bu_rflag === 0) ? bu_value :
-                            (bu_pc + 2) + {{5{bu_pcoffset11[10]}}, {bu_pcoffset11[10:0]}} :
-                        is_br ? (bu_pc + 2) + {{5{bu_pcoffset11[10]}}, {bu_pcoffset11[10:0]}}: //I changed this, might not be correct
-                        pc + 2;
-                            
-    wire [15:0]bu_r7 = bu_pc + 2;
+    reg [15:0] bu_pcval;
+    reg [10:0] bu_pcoffset11;
+    reg bu_rflag; // IMPLEMENT THIS
 
-    wire bu_jmp = is_jmp ||
-                is_jsr ||
-                1;//;(is_br && ((bu_n && bu_nzp[2]) || (bu_z && bu_nzp[1]) || (bu_p && bu_nzp[0])));
-        //TODO: bu_n does not exist
+    wire [3:0] bu_nzp = ROB_condition_codes[(bu_rob -1)%64 ];
+
+    reg [15:0] bu_value;
+    
+    wire bu_is_jmp = (bu_opcode == 4'b1100);
+    wire bu_is_jsr = (bu_opcode == 4'b0100);
+    wire bu_is_br = (bu_opcode == 4'b0000);
+    wire [15:0] bu_pc_offset = {{5{bu_pcoffset11[10]}}, bu_pcoffset11[10:0]};
+    wire [15:0]target = bu_is_jmp ? bu_value :
+                        bu_is_jsr ?
+                            (bu_rflag === 0) ? bu_pcval :
+                            (bu_pcval + 2) + {{5{bu_pcoffset11[10]}}, {bu_pcoffset11[10:0]}} :
+                        bu_is_br ? (bu_pcval + 2) + {{5{bu_pcoffset11[10]}}, {bu_pcoffset11[10:0]}}: //I changed this, might not be correct
+                        bu_pcval + 2;
+                            
+    wire [15:0]bu_r7 = bu_pcval + 2;
+
+    // wire bu_br_cond = (is_br && ((bu_n && bu_nzp[2]) || (bu_z && bu_nzp[1]) || (bu_p && bu_nzp[0])));
+    wire bu_br_cond = 1'b0;
+
+    wire bu_jmp = bu_is_jmp ||
+                bu_is_jsr ||
+                bu_is_br && (bu_br_cond) ||
+                0;
+
+    assign forwardC = {bu_valid, bu_rob, target};
 
     always @(posedge clk) begin
         bu_valid <= bu_rs_valid;
         bu_opcode <= bu_rs_out[40:37];
         bu_rob <= bu_rs_out[36:32];
-        bu_value <= bu_rs_out[31:0];
+        bu_pcval <= bu_rs_out[31:16];
+        bu_pcoffset11 <= bu_rs_out[10:0];
+        ROBcheck[bu_rob] <= {bu_jmp, 1'b0, 1'b0, bu_is_jsr, 3'b111};
     end
 
 
@@ -939,14 +977,25 @@ module main();
     assign lsu_used = lsu_out[2:1] === 2'b00;
     wire load_flush = 1'b0;
     wire [1:0] store_buffer_commit = 2'b00;
+    wire [5:0] load_opcode = lsu_out[55:52];
     wire load_is_ld = (lsu_out[55:52]===4'b0010) | (lsu_out[56:52]===4'b1010) | (lsu_out[56:52]===4'b0110);
+
+    wire [15:0] lsu_in_loc0 = (load_opcode === 4'b0011 | load_opcode === 4'b1011) ? ROB[lsu_rob][15:0] : 
+                                (load_opcode === 4'b0111) ? lsu_out[17:2] :
+                                lsu_out[33:18];
+    wire [5:0] lsu_offset6 = ROBcheck[lsu_rob][11:6];
+    wire [15:0] lsu_in_loc1 = (load_opcode === 4'b0110 | load_opcode === 4'b0111) ? {{9{lsu_offset6[5]}}, lsu_offset6} : 
+                                lsu_out[17:2];
+
+    wire [15:0] lsu_in_loc = lsu_in_loc + lsu_in_loc1;
+
     //TODO: STORE ISSUE
     //TODO: Load location line up issues
     load_store_unit lsu(
         .clk(clk),
         .flush(load_flush),
         .stores_to_commit(store_buffer_commit),
-        .is_ld(load_is_ld), .data(lsu_out[33:18]), .location(lsu_out[17:2]), .ROBloc(lsu_out[51:46]), .input_valid(lsu_used),
+        .is_ld(load_is_ld), .data(lsu_out[33:18]), .location(lsu_in_loc), .ROBloc(lsu_out[51:46]), .input_valid(lsu_used),
         .commit_data(mem_wdata), .commit_location(mem_waddr), .commit_valid(mem_wen),
         .mem_location(mem_raddr), .mem_valid(),
         .mem_data(mem_rdata),
@@ -961,29 +1010,111 @@ module main();
         if(pc > 100)
             halt <= 1;
         pc <= pc + 8;
+        //pc <= cu_target;
         //pc <= target;
     end
 
     wire [5:0] headOfROB = ROBcheck[ROBhead];
     wire [32:0] ROBa = ROB[ROBhead];
+    wire [15:0] trap_read;
+    wire flush = cu_flush;
+
+    reg cu_flush = 1'b0;
+
+    reg cu_wen0;
+    reg cu_wen1;
+    reg cu_wen2;
+
+    reg [2:0] cu_waddr0;
+    reg [2:0] cu_waddr1;
+    reg [2:0] cu_waddr2;
+
+    reg [15:0] cu_wdata0;
+    reg [15:0] cu_wdata1;
+    reg [15:0] cu_wdata2;
+
+    reg [15:0]cu_target;
 
     //ROB Commit Unit
     always @(posedge clk) begin
+        // TODO move all pc target logic here
+        // propogate bu_jmp flush signal here
+        // check to see if committed instruction is behind a jmp instruction -> do not exec
+        cu_target <= (ROBcheck[ROBhead][6] === 1) ? ROB[ROBhead][15:0] : 
+                        (ROBcheck[(ROBhead + 1) % 64][6] === 1) ? ROB[ROBhead][15:0] :
+                        (ROBcheck[(ROBhead + 2) % 64][6] === 1) ? ROB[ROBhead][15:0] : pc + 8;
+
+        // Commit 0
         if(ROB[ROBhead][32] === 1'b1) begin
-            
-            if(ROBcheck[ROBhead][5] == 1'b1) begin
-                //IsTrapVector
-                $write("TRAPP");
+            if(ROBcheck[ROBhead][5] == 1'b1) begin //IsTrapVector
+                if(ROB[ROBhead][8:0] == 8'b00100001) begin  // x21
+                    $write("%0c", trap_read[7:0]);
+                end
+                else if((ROB[ROBhead][8:0] == 8'b00100101)) begin  //x 25
+                    $finish();
+                end 
             end
             else if(ROBcheck[ROBhead][4] == 1'b1) begin
-                //Is Store
+                // send sinal to aaron
             end
             else if(ROBcheck[ROBhead][3] == 1'b1) begin
-                //Is Write to Reg
-                $write("WRITE");
+                cu_wen0 <= 1; // conflicts resolved by regs.v
+                cu_waddr0 <= ROBcheck[ROBhead][2:0];
+                cu_wdata0 <= ROB[ROBhead][15:0];
+            end
+            else begin
+                cu_wen0 <= 0;           
             end
 
             ROBhead <= (ROBhead + 1) % 64;
+
+            // Commit 1
+            if((ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6]) begin
+                
+                if(ROBcheck[(ROBhead+1) % 64][5] == 1'b1) begin //IsTrapVector
+                    if(ROB[(ROBhead+1) % 64][8:0] == 8'b00100001) begin  // x21
+                        $write("%0c", trap_read[7:0]);
+                    end
+                    else if((ROB[ROBhead+1][8:0] == 8'b00100101)) begin  //x 25
+                        $finish();
+                    end 
+                end
+                else if(ROBcheck[(ROBhead+1) % 64][4] == 1'b1) begin
+                    //Is Store
+                end
+                else if(ROBcheck[(ROBhead+1) % 64][3] == 1'b1) begin
+                    cu_wen1 <= 1;
+                    cu_waddr1 <= ROBcheck[(ROBhead+1) % 64][2:0];
+                    cu_wdata1 <= ROB[(ROBhead+1) % 64][15:0];
+                end
+                else begin
+                    cu_wen1 <= 0;           
+                end
+
+                // Commit 2
+                if((ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && !ROBcheck[(ROBhead + 1) % 64][6]) begin
+                    
+                    if(ROBcheck[(ROBhead+2)%64][5] == 1'b1) begin //IsTrapVector
+                        if(ROB[(ROBhead+2)%64][8:0] == 8'b00100001) begin  // x21
+                            $write("%0c", trap_read[7:0]);
+                        end
+                        else if((ROB[(ROBhead+2)%64][8:0] == 8'b00100101)) begin  //x 25
+                            $finish();
+                        end 
+                    end
+                    else if(ROBcheck[(ROBhead+2)%64][4] == 1'b1) begin
+                        //Is Store
+                    end
+                    else if(ROBcheck[(ROBhead+2)%64][3] == 1'b1) begin
+                        cu_wen2 <= 1;
+                        cu_waddr2 <= ROBcheck[(ROBhead+2)%64][2:0];
+                        cu_wdata2 <= ROB[(ROBhead+2)%64][15:0];
+                    end
+                    else begin
+                        cu_wen2 <= 0;           
+                    end
+                end
+            end
         end
     end
 

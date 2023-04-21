@@ -45,6 +45,7 @@ module mem(input clk,
         raddr1 <= raddr1_;
         rdata0 <= data[raddr0];
         rdata1 <= data[raddr1];
+        
         if (wen0) begin
             data[waddr0] <= wdata0;
         end

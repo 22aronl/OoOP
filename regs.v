@@ -14,7 +14,9 @@ module regs(input clk,
     input [5:0] rob_locC, input [2:0] rob_waddrC, input rob_wenC,
     input [5:0] rob_locD, input [2:0] rob_waddrD, input rob_wenD,
     input wen0, input [2:0]waddr0, input [15:0]wdata0,
-    input wen1, input [2:0]waddr1, input [15:0]wdata1);
+    input wen1, input [2:0]waddr1, input [15:0]wdata1,
+    input wen2, input [2:0]waddr2, input [15:0]wdata2,
+    output [15:0] trap_read);
 
     reg [15:0]data[0:7];
     reg busy[0:7];
@@ -37,6 +39,8 @@ module regs(input clk,
     assign rdata5 = {data[raddr5], busy[raddr5], rob_loc[raddr5]};
     assign rdata6 = {data[raddr6], busy[raddr6], rob_loc[raddr6]};
     assign rdata7 = {data[raddr7], busy[raddr7], rob_loc[raddr7]};
+
+    assign trap_read = data[0];
 
     integer i;
     initial begin
@@ -78,6 +82,10 @@ module regs(input clk,
 
         if(wen1) begin
             data[waddr1] <= wdata1;
+        end
+
+        if(wen2) begin
+            data[waddr2] <= wdata2;
         end
     end
 

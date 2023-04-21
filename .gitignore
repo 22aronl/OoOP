@@ -1,4 +1,4 @@
-*.vcd
+# *.vcd
 *.out
 *.err
 *.time

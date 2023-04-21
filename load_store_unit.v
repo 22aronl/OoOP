@@ -17,6 +17,7 @@ module load_store_unit(
     parameter LOAD_WAIT = 3;
     parameter LOAD_SIZE = 8;
     wire store_buffer_stall;
+    
     // [6] valid [5:0] ROB_location
     reg [6:0] load_store[0:LOAD_SIZE-1];
     reg [16:0] load_store_data[0:LOAD_SIZE-1];
