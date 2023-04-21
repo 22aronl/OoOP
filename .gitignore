@@ -8,5 +8,5 @@
 *.cycles
 mem.hex
 cpu
-
+cpu.vcd
 .vscode
