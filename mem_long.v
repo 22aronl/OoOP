@@ -40,6 +40,7 @@ module mem_long(input clk,
         rinstruct3 <= rinstruct3_;
 
         shift_reg[0] <= raddr0_;
+        shift_write[0] <= {wdata0, waddr0, wen0};
         rdata0_ <= data[shift_reg[DELAY]];
 
         if(shift_write[DELAY][0] === 1'b1) begin
