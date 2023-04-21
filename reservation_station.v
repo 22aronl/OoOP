@@ -1,4 +1,5 @@
 module reservation_station(input clk,
+
     input [22:0] forwardA, input [22:0] forwardB, input [22:0] forwardC, input [22:0] forwardD,
     input [56:0] inOperation, output operationUsed, output [41:0] outOperation, output outOperationValid
     );
