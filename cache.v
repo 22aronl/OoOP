@@ -15,7 +15,7 @@ module cache(input clk,
     wire [DATA_WIDTH - 1: 0] wdata = shift_write[DELAY][31:16];
     wire [DATA_WIDTH - 1: 1] waddr = shift_write[DELAY][15:1];
 
-    //Memory 16: [16:9] Tag [8:3] Index [2:0] Offset
+    //Memory 16: [15:8] Tag [7:2] Index [1:0] Offset
     reg [DATA_WIDTH - 1 : 0] data[0 : NUM_SETS - 1];
     reg [TAG_WIDTH - 1 : 0] tag[0 : NUM_SETS - 1];
     reg [DATA_WIDTH - 1: 0] valid[0 : NUM_SETS - 1];
@@ -35,7 +35,7 @@ module cache(input clk,
         end
     end
 
-    wire store_en = wen0 & valid[waddr0[8:3]];
+    wire store_en = wen0 & valid[waddr0[7:2]];
 
     always @(posedge clk) begin
         shift_reg[0] <= raddr0_;
@@ -47,13 +47,13 @@ module cache(input clk,
         end
 
         if(wen0) begin
-            if(valid[waddr[8:3]] == 1'b1) begin
-                store_data <= data[waddr[8:3]];
-                store_addr <= {tag[waddr[8:3]], waddr[8:3], 2'b00};
+            if(valid[waddr[7:2]] == 1'b1) begin
+                store_data <= data[waddr[7:2]];
+                store_addr <= {tag[waddr[7:2]], waddr[7:2], 2'b00};
             end
-            data[waddr[8:3]] <= wdata;
-            tag[waddr[8:3]] <= waddr[15:16-TAG_WIDTH+1];
-            valid[waddr[8:3]] <= 1'b1;
+            data[waddr[7:2]] <= wdata;
+            tag[waddr[7:2]] <= waddr[15:16-TAG_WIDTH+1];
+            valid[waddr[7:2]] <= 1'b1;
         end
 
         if(hit0 & valid[rindex0]) begin
