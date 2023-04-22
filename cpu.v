@@ -1047,12 +1047,17 @@ module main();
                         (ROBcheck[(ROBhead + 2) % 64][6] === 1) ? ROB[ROBhead][15:0] : pc + 8;
 
         // Commit 0
+        wire [15:0]cu0_result = ROB[(ROBhead)] == forwardA[21:16] ? forwardA[31:16] :
+                                ROB[(ROBhead)] == forwardB[21:16] ? forwardB[31:16] :
+                                ROB[(ROBhead)] == forwardC[21:16] ? forwardC[31:16] :
+                                ROB[(ROBhead)] == forwardD[21:16] ? forwardD[31:16] :
+                                ROB[(ROBhead)][31:16];
         if(ROB[ROBhead][32] === 1'b1) begin
             if(ROBcheck[ROBhead][5] == 1'b1) begin //IsTrapVector
                 if(ROBcheck[ROBhead][7] == 1'b1) begin  // x21
-                    $write("%0c", ROB[ROBhead][23:16]);
+                    $write("%0c", cu0_result[7:0]);
                 end
-                else if((ROB[ROBhead][24:16] == 8'b00100101)) begin  //x 25
+                else begin  //x 25
                     $finish();
                 end 
             end
@@ -1062,24 +1067,30 @@ module main();
             else if(ROBcheck[ROBhead][3] == 1'b1) begin
                 cu_wen0 <= 1; // conflicts resolved by regs.v
                 cu_waddr0 <= ROBcheck[ROBhead][2:0];
-                cu_wdata0 <= ROB[ROBhead][31:16];
+                cu_wdata0 <= cu0_result;
             end
             else begin
                 cu_wen0 <= 0;           
             end
 
-            ROBhead <= (ROBhead + 1) % 64;
 
             // Commit 1
+            // forward the val to be committed
+            wire [15:0]cu1_result = ROB[(ROBhead+1) % 64] == forwardA[21:16] ? forwardA[31:16] :
+                                    ROB[(ROBhead+1) % 64] == forwardB[21:16] ? forwardB[31:16] :
+                                    ROB[(ROBhead+1) % 64] == forwardC[21:16] ? forwardC[31:16] :
+                                    ROB[(ROBhead+1) % 64] == forwardD[21:16] ? forwardD[31:16] :
+                                    ROB[(ROBhead+1) % 64][31:16];
+
             if((ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6]) begin
                 
                 if(ROBcheck[(ROBhead+1) % 64][5] == 1'b1) begin //IsTrapVector
                     if(ROBcheck[(ROBhead+1) % 64][7] == 1'b1) begin  // x21
-                        $write("%0c", ROB[(ROBhead+1) % 64][23:16]);
+                        $write("%0c", cu1_result[7:0]);
                     end
-                    else if((ROB[ROBhead+1][24:16] == 8'b00100101)) begin  //x 25
+                    else begin  //x 25
                         $finish();
-                    end 
+                    end
                 end
                 else if(ROBcheck[(ROBhead+1) % 64][4] == 1'b1) begin
                     //Is Store
@@ -1087,7 +1098,7 @@ module main();
                 else if(ROBcheck[(ROBhead+1) % 64][3] == 1'b1) begin
                     cu_wen1 <= 1;
                     cu_waddr1 <= ROBcheck[(ROBhead+1) % 64][2:0];
-                    cu_wdata1 <= ROB[(ROBhead+1) % 64][31:16];
+                    cu_wdata1 <= cu1_result[15:0];
                 end
                 else begin
                     cu_wen1 <= 0;           
@@ -1100,7 +1111,7 @@ module main();
                         if(ROBcheck[(ROBhead+2) % 64][7] == 1'b1) begin  // x21
                             $write("%0c", ROB[(ROBhead + 2) %64][23:16]);
                         end
-                        else if((ROB[(ROBhead+2)%64][24:16] == 8'b00100101)) begin  //x 25
+                        else begin  //x 25
                             $finish();
                         end 
                     end
@@ -1117,6 +1128,7 @@ module main();
                     end
                 end
             end
+            ROBhead <= (ROBhead + 1) % 64;
         end
     end
 
