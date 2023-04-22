@@ -164,7 +164,7 @@ module main();
     wire [15:0] pc_offset11A = {{5{instructA[10]}}, instructA[10:0]};
     wire [15:0] offset6A = {{11{instructA[5]}}, instructA[4:0]};
 
-    wire useA0 = is_addrA | is_addiA | is_andrA | is_andiA | is_jmpA | is_jsrrA | is_ldrA | is_notA | is_stA | is_stiA | is_strA;
+    wire useA0 = is_addrA | is_addiA | is_andrA | is_andiA | is_jmpA | is_jsrrA | is_ldrA | is_notA | is_stA | is_stiA | is_strA | is_trapA;
     wire useA1 = is_addrA | is_andrA | is_strA;
     wire [1:0] useA = {useA0, useA1};
 
@@ -173,7 +173,8 @@ module main();
     wire is_storeA = is_stA | is_stiA | is_strA;
 
     wire is_aluA = (opcodeA == 4'b0001) | (opcodeA == 4'b1010) | (opcodeA == 4'b1001);
-    wire [2:0] regA0 = (is_storeA) ? writeRegA : instructA[8:6];
+    wire [2:0] regA0 = (is_storeA) ? writeRegA :
+                        is_trapA ? 0: instructA[8:6];
     wire [2:0] regA1 = is_strA ? instructA[8:6] : instructA[2:0];
 
 
@@ -216,7 +217,7 @@ module main();
     wire [15:0] pc_offset11B = {{8{instructB[8]}}, instructB[7:0]};
     wire [15:0] offset6B = {{11{instructB[5]}}, instructB[4:0]};
 
-    wire useB0 = is_addrB | is_addiB | is_andrB | is_andiB | is_jmpB | is_jsrrB | is_ldrB | is_notB;
+    wire useB0 = is_addrB | is_addiB | is_andrB | is_andiB | is_jmpB | is_jsrrB | is_ldrB | is_notB | is_trapB;
     wire useB1 = is_addrB | is_andrB;
     wire [1:0] useB = {useB0, useB1};
 
@@ -225,7 +226,7 @@ module main();
     wire is_storeB = is_stB | is_stiB | is_strB;
 
     wire is_aluB = (opcodeB == 4'b0001) | (opcodeB == 4'b1010) | (opcodeB == 4'b1001); // ?????????? where is this used
-    wire [2:0] regB0 = instructB[8:6];
+    wire [2:0] regB0 = is_trapB ? 0: instructB[8:6];
     wire [2:0] regB1 = instructB[2:0];
 
 
@@ -272,12 +273,12 @@ module main();
     wire useC1 = is_addrC | is_andrC | is_brC;
     wire [1:0] useC = {useC0, useC1};
 
-    wire writeToRegC = is_addrC | is_addiC | is_andrC | is_andiC | is_ldC | is_ldiC | is_ldrC | is_leaC | is_notC;
+    wire writeToRegC = is_addrC | is_addiC | is_andrC | is_andiC | is_ldC | is_ldiC | is_ldrC | is_leaC | is_notC | is_trapC;
     wire [2:0] writeRegC = instructC[11:9];
     wire is_storeC = is_stC | is_stiC | is_strC;
 
     wire is_aluC = (opcodeC == 4'b0001) | (opcodeC == 4'b1010) | (opcodeC == 4'b1001);
-    wire [2:0] regC0 = instructC[8:6];
+    wire [2:0] regC0 = is_trapC ? 0 : instructC[8:6];
     wire [2:0] regC1 = instructC[2:0];
 
 
@@ -321,7 +322,7 @@ module main();
     wire [15:0] pc_offset11D = {{5{instructD[10]}}, instructD[10:0]};
     wire [15:0] offset6D = {{11{instructD[5]}}, instructD[4:0]};
 
-    wire useD0 = is_addrD | is_addiD | is_andrD | is_andiD | is_jmpD | is_jsrrD | is_ldrD | is_notD;
+    wire useD0 = is_addrD | is_addiD | is_andrD | is_andiD | is_jmpD | is_jsrrD | is_ldrD | is_notD | is_trapD;
     wire useD1 = is_addrD | is_andrD;
     wire [1:0] useD = {useD0, useD1};
 
@@ -330,7 +331,7 @@ module main();
     wire is_storeD = is_stD | is_stiD | is_strD;
 
     wire is_aluD = (opcodeD == 4'b0001) | (opcodeD == 4'b1010) | (opcodeD == 4'b1001);
-    wire [2:0] regD0 = instructD[8:6];
+    wire [2:0] regD0 = is_trapD ? 0 :instructD[8:6];
     wire [2:0] regD1 = instructD[2:0];
 
 
@@ -383,7 +384,7 @@ module main();
     
     //TODO: Storage issues for store commands
     wire [5:0] d2_lookA0 = d2_rdataA0[5:0];
-    wire [5:0] d2_lookA1 = d2_is_brA ? (d2_tailA - 1) % 64:
+    wire [5:0] d2_lookA1 = d2_is_brA ? (d2_tailA +63) % 64:
                             d2_rdataA1[5:0];
     wire [15:0] d2_valueA0 = (d2_instructA[12] | d2_instructA[14] | d2_instructA[10] | d2_instructA[9] | d2_instructA[7]) ? d1_pcA :
                                 d2_instructA[13] ? {16{1'b0}} : // ret
@@ -450,7 +451,7 @@ module main();
     wire d2_lookB0_ = writeToRegA && (writeRegA == d2_regB0);
     wire d2_lookB1_ = writeToRegA && (writeRegA == d2_regB1);
     wire [5:0]d2_lookB0 = d2_lookB0_ ? d2_tailA : d2_rdataB0[5:0];
-    wire [5:0]d2_lookB1 = d2_is_brB ? (d2_tailB - 1) % 64:
+    wire [5:0]d2_lookB1 = d2_is_brB ? (d2_tailB +63) % 64:
                             d2_lookB1_ ? d2_tailA : d2_rdataB1[5:0];
 
     wire [15:0] d2_valueB0 = (d2_instructB[12] | d2_instructB[14] | d2_instructB[10] | d2_instructB[9] | d2_instructB[7] | d2_instructB[3] | d2_instructB[2]) ? d1_pcB :
@@ -514,7 +515,7 @@ module main();
     wire [5:0]d2_lookC0 = writeToRegB && 
                 (writeRegB == regC0) ? d2_tailB :                   // check in priority order
                 writeToRegA && (writeRegA == regC0) ? d2_tailA : d2_rdataC0[5:0];
-    wire [5:0]d2_lookC1 = d2_is_brC ? (d2_tailC - 1) % 64: // this is the ROB idx of the previous instruction
+    wire [5:0]d2_lookC1 = d2_is_brC ? (d2_tailC +63) % 64: // this is the ROB idx of the previous instruction
                 writeToRegB && 
                 (writeRegB == regC0) ? d2_tailB : 
                 writeToRegA && (writeRegA == regC0) ? d2_tailA : d2_rdataC1[5:0];
@@ -589,7 +590,7 @@ module main();
                 writeToRegB && (writeRegB == regD0) ? d2_tailB :
                 writeToRegA && (writeRegA == regD0) ? d2_tailA : d2_rdataD0[5:0];
 
-    wire [5:0]d2_lookD1 = d2_is_brD ? (d2_tailD - 1) % 64:
+    wire [5:0]d2_lookD1 = d2_is_brD ? (d2_tailD +63) % 64:
                 writeToRegC && (writeRegC == regD1) ? d2_tailC :
                 writeToRegB && (writeRegB == regD1) ? d2_tailB :
                 writeToRegA && (writeRegA == regD1) ? d2_tailA : d2_rdataD1[5:0];
@@ -847,7 +848,7 @@ module main();
     wire [15:0] alu_out1 = (alu_opcode1 == 4'b0000) ? alu_value1A + alu_value1B :            // ADD
                             (alu_opcode1 == 4'b0101) ? alu_value1A[4] & alu_value1B[4] :    // AND (based on bit 5)
                             (alu_opcode1 == 4'b1001) ? ~alu_value1A :                       // NOT
-                            (alu_opcode0 == 4'b1111) ?  alu_value1B[7:0] :                    // TRAP
+                            (alu_opcode1 == 4'b1111) ?  alu_value1B[7:0] :                    // TRAP
                             0;
     assign forwardB = {alu_valid1, alu_rob1, alu_out1};
     wire [2:0] condition_code_B = (alu_opcode1 == 4'b0001) | (alu_opcode1 == 4'b0101) | (alu_opcode1 == 4'b1001) ?
@@ -855,8 +856,8 @@ module main();
 
     always @(posedge clk) begin
         alu_valid1 <= alu_rs_1_valid;
-        alu_opcode1 <= alu_rs_1_out[40:37];
-        alu_rob1 <= alu_rs_1_out[36:32];
+        alu_opcode1 <= alu_rs_1_out[41:38];
+        alu_rob1 <= alu_rs_1_out[37:32];
         alu_value1A <= alu_rs_1_out[31:16];
         alu_value1B <= alu_rs_1_out[15:0];
 
@@ -891,7 +892,7 @@ module main();
     reg [10:0] bu_pcoffset11;
     reg bu_rflag; // IMPLEMENT THIS
 
-    wire [3:0] bu_nzp = ROB_condition_codes[(bu_rob -1)%64 ];
+    wire [3:0] bu_nzp = ROB_condition_codes[(bu_rob +63)%64 ];
 
     reg [15:0] bu_value;
     
@@ -1047,10 +1048,10 @@ module main();
         // Commit 0
         if(ROB[ROBhead][32] === 1'b1) begin
             if(ROBcheck[ROBhead][5] == 1'b1) begin //IsTrapVector
-                if(ROB[ROBhead][8:0] == 8'b00100001) begin  // x21
+                if(ROB[ROBhead][24:16] == 8'b00100001) begin  // x21
                     $write("%0c", trap_read[7:0]);
                 end
-                else if((ROB[ROBhead][8:0] == 8'b00100101)) begin  //x 25
+                else if((ROB[ROBhead][24:16] == 8'b00100101)) begin  //x 25
                     $finish();
                 end 
             end
@@ -1060,7 +1061,7 @@ module main();
             else if(ROBcheck[ROBhead][3] == 1'b1) begin
                 cu_wen0 <= 1; // conflicts resolved by regs.v
                 cu_waddr0 <= ROBcheck[ROBhead][2:0];
-                cu_wdata0 <= ROB[ROBhead][15:0];
+                cu_wdata0 <= ROB[ROBhead][31:16];
             end
             else begin
                 cu_wen0 <= 0;           
@@ -1072,10 +1073,10 @@ module main();
             if((ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6]) begin
                 
                 if(ROBcheck[(ROBhead+1) % 64][5] == 1'b1) begin //IsTrapVector
-                    if(ROB[(ROBhead+1) % 64][8:0] == 8'b00100001) begin  // x21
+                    if(ROB[(ROBhead+1) % 64][24:16] == 8'b00100001) begin  // x21
                         $write("%0c", trap_read[7:0]);
                     end
-                    else if((ROB[ROBhead+1][8:0] == 8'b00100101)) begin  //x 25
+                    else if((ROB[ROBhead+1][24:16] == 8'b00100101)) begin  //x 25
                         $finish();
                     end 
                 end
@@ -1085,7 +1086,7 @@ module main();
                 else if(ROBcheck[(ROBhead+1) % 64][3] == 1'b1) begin
                     cu_wen1 <= 1;
                     cu_waddr1 <= ROBcheck[(ROBhead+1) % 64][2:0];
-                    cu_wdata1 <= ROB[(ROBhead+1) % 64][15:0];
+                    cu_wdata1 <= ROB[(ROBhead+1) % 64][31:16];
                 end
                 else begin
                     cu_wen1 <= 0;           
@@ -1095,10 +1096,10 @@ module main();
                 if((ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && !ROBcheck[(ROBhead + 1) % 64][6]) begin
                     
                     if(ROBcheck[(ROBhead+2)%64][5] == 1'b1) begin //IsTrapVector
-                        if(ROB[(ROBhead+2)%64][8:0] == 8'b00100001) begin  // x21
+                        if(ROB[(ROBhead+2)%64][24:16] == 8'b00100001) begin  // x21
                             $write("%0c", trap_read[7:0]);
                         end
-                        else if((ROB[(ROBhead+2)%64][8:0] == 8'b00100101)) begin  //x 25
+                        else if((ROB[(ROBhead+2)%64][24:16] == 8'b00100101)) begin  //x 25
                             $finish();
                         end 
                     end
@@ -1108,7 +1109,7 @@ module main();
                     else if(ROBcheck[(ROBhead+2)%64][3] == 1'b1) begin
                         cu_wen2 <= 1;
                         cu_waddr2 <= ROBcheck[(ROBhead+2)%64][2:0];
-                        cu_wdata2 <= ROB[(ROBhead+2)%64][15:0];
+                        cu_wdata2 <= ROB[(ROBhead+2)%64][31:16];
                     end
                     else begin
                         cu_wen2 <= 0;           

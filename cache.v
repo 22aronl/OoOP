@@ -10,6 +10,8 @@ module cache(input clk,
     parameter INDEX_WIDTH = 6;
     parameter TAG_WIDTH = 8;
 
+    //TODO: May be taking in too much data -> update memory
+
     wire [DATA_WIDTH - 1: 0] addr0 = shift_reg[DELAY];
     wire wen = shift_write[DELAY][0];
     wire [DATA_WIDTH - 1: 0] wdata = shift_write[DELAY][31:16];
