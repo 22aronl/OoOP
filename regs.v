@@ -21,6 +21,8 @@ module regs(input clk,
     reg busy[0:7];
     reg [5:0] rob_loc[0:7];
 
+    wire [15:0]test_r0 = data[0]
+
     reg [2:0]raddr0;
     reg [2:0]raddr1;
     reg [2:0]raddr2;

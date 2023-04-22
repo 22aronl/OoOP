@@ -1025,11 +1025,11 @@ module main();
 
     wire cu_wen0 = ROB[ROBhead][32] & ROBcheck[ROBhead][3]; // if [4] then should be mem write enabled
     wire cu_wen1 = ROB[ROBhead][32] & (ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6];
-    reg cu_wen2 = ROB[ROBhead][32] & (ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] & (ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && !ROBcheck[(ROBhead + 1) % 64][6];
+    wire cu_wen2 = ROB[ROBhead][32] & (ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] & (ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && !ROBcheck[(ROBhead + 1) % 64][6];
 
     wire [2:0] cu_waddr0 = ROBcheck[ROBhead][2:0];
     wire [2:0] cu_waddr1 = ROBcheck[(ROBhead+1) % 64][2:0];
-    reg [2:0] cu_waddr2 = ROBcheck[(ROBhead+2) % 64][2:0];
+    wire [2:0] cu_waddr2 = ROBcheck[(ROBhead+2) % 64][2:0];
 
     reg [15:0]cu_target;
 
