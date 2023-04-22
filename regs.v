@@ -15,8 +15,7 @@ module regs(input clk,
     input [5:0] rob_locD, input [2:0] rob_waddrD, input rob_wenD,
     input wen0, input [2:0]waddr0, input [15:0]wdata0,
     input wen1, input [2:0]waddr1, input [15:0]wdata1,
-    input wen2, input [2:0]waddr2, input [15:0]wdata2,
-    output [15:0] trap_read);
+    input wen2, input [2:0]waddr2, input [15:0]wdata2);
 
     reg [15:0]data[0:7];
     reg busy[0:7];

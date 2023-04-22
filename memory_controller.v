@@ -13,7 +13,9 @@ module memory_controller(input clk,
         .raddr1_(raddr1_), .rdata1_(), .rvalid1_(),
         .store_addr(), .store_data(), .store_en(),
         .wen0(), .waddr0(), .wdata0()
-    );
+    ); 
+
+    //todo: i have read issues where writes can be overwrriten by a memory fetch
 
     mem_long #(85) mem(
         .clk(clk),

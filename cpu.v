@@ -109,7 +109,6 @@ module main();
         .wen2(wen2),
         .waddr2(waddr2),
         .wdata2(wdata2),
-        .trap_read(trap_read)
     );
 
 
@@ -512,13 +511,13 @@ module main();
     reg d2_is_ldunitC = 1'b0;
     reg d2_is_bunitC = 1'b0;
 
-    wire [5:0]d2_lookC0 = writeToRegB && 
-                (writeRegB == regC0) ? d2_tailB :                   // check in priority order
-                writeToRegA && (writeRegA == regC0) ? d2_tailA : d2_rdataC0[5:0];
+    wire [5:0]d2_lookC0 = d2_writeToRegB && 
+                (d2_writeRegB == d2_regC0) ? d2_tailB :                   // check in priority order
+                d2_writeToRegA && (d2_writeRegA == d2_regC0) ? d2_tailA : d2_rdataC0[5:0];
     wire [5:0]d2_lookC1 = d2_is_brC ? (d2_tailC +63) % 64: // this is the ROB idx of the previous instruction
-                writeToRegB && 
-                (writeRegB == regC0) ? d2_tailB : 
-                writeToRegA && (writeRegA == regC0) ? d2_tailA : d2_rdataC1[5:0];
+                d2_writeToRegB && 
+                (d2_writeRegB == d2_regC0) ? d2_tailB : 
+                d2_writeToRegA && (d2_writeRegA == d2_regC0) ? d2_tailA : d2_rdataC1[5:0];
 
                 //TODO: WHY??
 
@@ -586,14 +585,14 @@ module main();
     reg d2_is_ldunitD = 1'b0;
     reg d2_is_bunitD = 1'b0;
 
-    wire [5:0]d2_lookD0 = writeToRegC && (writeRegC == regD0) ? d2_tailC :
-                writeToRegB && (writeRegB == regD0) ? d2_tailB :
-                writeToRegA && (writeRegA == regD0) ? d2_tailA : d2_rdataD0[5:0];
+    wire [5:0]d2_lookD0 = d2_writeToRegC && (d2_writeRegC == d2_regD0) ? d2_tailC :
+                d2_writeToRegB && (d2_writeRegB == d2_regD0) ? d2_tailB :
+                d2_writeToRegA && (d2_writeRegA == d2_regD0) ? d2_tailA : d2_rdataD0[5:0];
 
     wire [5:0]d2_lookD1 = d2_is_brD ? (d2_tailD +63) % 64:
-                writeToRegC && (writeRegC == regD1) ? d2_tailC :
-                writeToRegB && (writeRegB == regD1) ? d2_tailB :
-                writeToRegA && (writeRegA == regD1) ? d2_tailA : d2_rdataD1[5:0];
+                d2_writeToRegC && (d2_writeRegC == d2_regD1) ? d2_tailC :
+                d2_writeToRegB && (d2_writeRegB == d2_regD1) ? d2_tailB :
+                d2_writeToRegA && (d2_writeRegA == d2_regD1) ? d2_tailA : d2_rdataD1[5:0];
 
     wire [15:0] d2_valueD0 = (d2_instructD[12] | d2_instructD[14] | d2_instructD[10] | d2_instructD[9] | d2_instructD[7] | d2_instructD[3] | d2_instructD[2]) ? d1_pcD :
                                 d2_instructD[13] ? {16{1'b0}} : // ret
@@ -642,8 +641,8 @@ module main();
     //TODO: Add support for the condition registers
     //Ready Bit, Value, PC (for piping into cache & branch checking for now)
     reg [32:0] ROB[0:63];
-    //Addition check for: [11:6] offset6  [6] take jump, [5] isTrap, [4] IsStore, [3] IsWriteToReg, [2:0] RegNum
-    reg [6:0] ROBcheck[0:63];
+    //Addition check for: [11:6] offset6   [7] set=x21 not set=x25 [6] take jump, [5] isTrap, [4] IsStore, [3] IsWriteToReg, [2:0] RegNum
+    reg [7:0] ROBcheck[0:63];
     reg [2:0] ROB_condition_codes[0:63]; // N, Z, P
     reg [5:0] ROBhead = 5'h00;
     reg [5:0] ROBtail = 5'h00;
@@ -671,12 +670,14 @@ module main();
             ROB[forwardA[21:16]][31:16] <= forwardA[15:0];
             ROB_condition_codes[forwardA[21:16]] <= condition_code_A;
             ROB[forwardA[21:16]][32] <= 1'b1;
+            ROBcheck[forwardA[21:16]][7] <= alu_value0B == 8'b00100101 ? 1'b0 : 1'b1;
         end
 
         if(forwardB[22] == 1'b1) begin
             ROB[forwardB[21:16]][31:16] <= forwardB[15:0];
             ROB_condition_codes[forwardB[21:16]] <= condition_code_B;
             ROB[forwardB[21:16]][32] <= 1'b1;
+            ROBcheck[forwardB[21:16]][7] <= alu_value1B == 8'b00100101 ? 1'b0 : 1'b1;
         end
 
         if(forwardC[22] == 1'b1) begin
@@ -688,6 +689,7 @@ module main();
             ROB[forwardD[21:16]][31:16] <= forwardD[15:0];
             ROB_condition_codes[forwardD[21:16]] <= condition_code_D;
             ROB[forwardD[21:16]][32] <= 1'b1;
+            // add the thing for trap
         end
     end
 
@@ -820,7 +822,7 @@ module main();
     wire [15:0] alu_out0 = (alu_opcode0 == 4'b0001) ? alu_value0A + alu_value0B :           // ADD
                             (alu_opcode0 == 4'b0101) ? alu_value0A[4] & alu_value0B[4] :    // AND (based on bit 5)
                             (alu_opcode0 == 4'b1001) ? ~alu_value0A :                       // NOT
-                            (alu_opcode0 == 4'b1111) ?  alu_value0B[7:0] :                   // TRAP
+                            (alu_opcode0 == 4'b1111) ?  alu_value0A :                   // TRAP
                                0;
     
     assign forwardA = {alu_valid0, alu_rob0, alu_out0};
@@ -848,7 +850,7 @@ module main();
     wire [15:0] alu_out1 = (alu_opcode1 == 4'b0000) ? alu_value1A + alu_value1B :            // ADD
                             (alu_opcode1 == 4'b0101) ? alu_value1A[4] & alu_value1B[4] :    // AND (based on bit 5)
                             (alu_opcode1 == 4'b1001) ? ~alu_value1A :                       // NOT
-                            (alu_opcode1 == 4'b1111) ?  alu_value1B[7:0] :                    // TRAP
+                            (alu_opcode1 == 4'b1111) ?  alu_value1A :                    // TRAP
                             0;
     assign forwardB = {alu_valid1, alu_rob1, alu_out1};
     wire [2:0] condition_code_B = (alu_opcode1 == 4'b0001) | (alu_opcode1 == 4'b0101) | (alu_opcode1 == 4'b1001) ?
@@ -1017,7 +1019,6 @@ module main();
 
     wire [5:0] headOfROB = ROBcheck[ROBhead];
     wire [32:0] ROBa = ROB[ROBhead];
-    wire [15:0] trap_read;
     wire flush = cu_flush;
 
     reg cu_flush = 1'b0;
@@ -1049,7 +1050,7 @@ module main();
         if(ROB[ROBhead][32] === 1'b1) begin
             if(ROBcheck[ROBhead][5] == 1'b1) begin //IsTrapVector
                 if(ROB[ROBhead][24:16] == 8'b00100001) begin  // x21
-                    $write("%0c", trap_read[7:0]);
+                    $write("%0c", ROB[ROBhead][23:16]);
                 end
                 else if((ROB[ROBhead][24:16] == 8'b00100101)) begin  //x 25
                     $finish();
@@ -1074,7 +1075,7 @@ module main();
                 
                 if(ROBcheck[(ROBhead+1) % 64][5] == 1'b1) begin //IsTrapVector
                     if(ROB[(ROBhead+1) % 64][24:16] == 8'b00100001) begin  // x21
-                        $write("%0c", trap_read[7:0]);
+                        $write("%0c", ROB[(ROBhead+1) % 64][23:16]);
                     end
                     else if((ROB[ROBhead+1][24:16] == 8'b00100101)) begin  //x 25
                         $finish();
@@ -1097,7 +1098,7 @@ module main();
                     
                     if(ROBcheck[(ROBhead+2)%64][5] == 1'b1) begin //IsTrapVector
                         if(ROB[(ROBhead+2)%64][24:16] == 8'b00100001) begin  // x21
-                            $write("%0c", trap_read[7:0]);
+                            $write("%0c", ROB[(ROBhead + 2) %64][23:16]);
                         end
                         else if((ROB[(ROBhead+2)%64][24:16] == 8'b00100101)) begin  //x 25
                             $finish();
