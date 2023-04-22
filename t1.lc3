@@ -1,2 +1,4 @@
-add r0, r3, r4
+.ORIG x0
+add r0, r3, x5
 trap x21
+.END
