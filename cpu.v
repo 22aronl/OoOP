@@ -1063,7 +1063,7 @@ module main();
         if(ROB[ROBhead][32] === 1'b1) begin
             if(ROBcheck[ROBhead][5] == 1'b1) begin //IsTrapVector
                 if(ROBcheck[ROBhead][7] == 1'b1) begin  // x21
-                    $write("%0c", cu0_result[7:0]);
+                    $write("%0c", cu_wdata0[7:0]);
                 end
                 else begin  //x 25
                     $finish();
@@ -1076,7 +1076,7 @@ module main();
                 
                 if(ROBcheck[(ROBhead+1) % 64][5] == 1'b1) begin //IsTrapVector
                     if(ROBcheck[(ROBhead+1) % 64][7] == 1'b1) begin  // x21
-                        $write("%0c", cu1_result[7:0]);
+                        $write("%0c", cu_wdata1[7:0]);
                     end
                     else begin  //x 25
                         $finish();
@@ -1088,7 +1088,7 @@ module main();
                     
                     if(ROBcheck[(ROBhead+2)%64][5] == 1'b1) begin //IsTrapVector
                         if(ROBcheck[(ROBhead+2) % 64][7] == 1'b1) begin  // x21
-                            $write("%0c", ROB[(ROBhead + 2) %64][23:16]);
+                            $write("%0c", cu_wdata2);
                         end
                         else begin  //x 25
                             $finish();
