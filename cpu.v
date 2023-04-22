@@ -1023,16 +1023,16 @@ module main();
 
     reg cu_flush = 1'b0;
 
-    reg cu_wen0;
-    reg cu_wen1;
+    reg cu_wen0 = ROB[ROBhead][32] & ROBcheck[ROBhead][3];
+    reg cu_wen1 = ROB[ROBhead][32] & (ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6];
     reg cu_wen2;
 
-    reg [2:0] cu_waddr0;
-    reg [2:0] cu_waddr1;
+    reg [2:0] cu_waddr0 = ROBcheck[ROBhead][2:0];
+    reg [2:0] cu_waddr1 = ROBcheck[(ROBhead+1) % 64][2:0];
     reg [2:0] cu_waddr2;
 
-    reg [15:0] cu_wdata0;
-    reg [15:0] cu_wdata1;
+    reg [15:0] cu_wdata0 = cu0_result;
+    reg [15:0] cu_wdata1 = cu1_result;
     reg [15:0] cu_wdata2;
 
     reg [15:0]cu_target;
@@ -1067,17 +1067,18 @@ module main();
                     $finish();
                 end 
             end
-            else if(ROBcheck[ROBhead][4] == 1'b1) begin
-                // send sinal to aaron
-            end
-            else if(ROBcheck[ROBhead][3] == 1'b1) begin
-                cu_wen0 <= 1; // conflicts resolved by regs.v
-                cu_waddr0 <= ROBcheck[ROBhead][2:0];
-                cu_wdata0 <= cu0_result;
-            end
-            else begin
-                cu_wen0 <= 0;           
-            end
+            // else if(ROBcheck[ROBhead][4] == 1'b1) begin
+            //     // send sinal to aaron
+            // end
+            // else if(ROBcheck[ROBhead][3] == 1'b1) begin
+            //     cu_wen0 <= 1; // conflicts resolved by regs.v
+            //     cu_waddr0 <= ROBcheck[ROBhead][2:0];
+            //     cu_wdata0 <= cu0_result;
+            // end
+            // else begin
+            //     cu_wen0 <= 0;           
+            // end
+            ROBhead <= (ROBhead + 1) % 64;
 
 
             // Commit 1
@@ -1092,18 +1093,18 @@ module main();
                         $finish();
                     end
                 end
-                else if(ROBcheck[(ROBhead+1) % 64][4] == 1'b1) begin
-                    //Is Store
-                end
-                else if(ROBcheck[(ROBhead+1) % 64][3] == 1'b1) begin
-                    cu_wen1 <= 1;
-                    cu_waddr1 <= ROBcheck[(ROBhead+1) % 64][2:0];
-                    cu_wdata1 <= cu1_result[15:0];
-                end
-                else begin
-                    cu_wen1 <= 0;           
-                end
-
+                // else if(ROBcheck[(ROBhead+1) % 64][4] == 1'b1) begin
+                //     //Is Store
+                // end
+                // else if(ROBcheck[(ROBhead+1) % 64][3] == 1'b1) begin
+                //     cu_wen1 <= 1;
+                //     cu_waddr1 <= ROBcheck[(ROBhead+1) % 64][2:0];
+                //     cu_wdata1 <= cu1_result[15:0];
+                // end
+                // else begin
+                //     cu_wen1 <= 0;           
+                // end
+                ROBhead <= (ROBhead + 1) % 64;
                 // Commit 2
                 if((ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && !ROBcheck[(ROBhead + 1) % 64][6]) begin
                     
@@ -1126,9 +1127,10 @@ module main();
                     else begin
                         cu_wen2 <= 0;           
                     end
+                    ROBhead <= (ROBhead + 1) % 64;
+
                 end
             end
-            ROBhead <= (ROBhead + 1) % 64;
         end
     end
 
