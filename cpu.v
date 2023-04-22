@@ -108,7 +108,7 @@ module main();
         .wdata1(wdata1),
         .wen2(wen2),
         .waddr2(waddr2),
-        .wdata2(wdata2),
+        .wdata2(wdata2)
     );
 
 
@@ -1049,7 +1049,7 @@ module main();
         // Commit 0
         if(ROB[ROBhead][32] === 1'b1) begin
             if(ROBcheck[ROBhead][5] == 1'b1) begin //IsTrapVector
-                if(ROB[ROBhead][24:16] == 8'b00100001) begin  // x21
+                if(ROBcheck[ROBhead][7] == 1'b1) begin  // x21
                     $write("%0c", ROB[ROBhead][23:16]);
                 end
                 else if((ROB[ROBhead][24:16] == 8'b00100101)) begin  //x 25
@@ -1074,7 +1074,7 @@ module main();
             if((ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6]) begin
                 
                 if(ROBcheck[(ROBhead+1) % 64][5] == 1'b1) begin //IsTrapVector
-                    if(ROB[(ROBhead+1) % 64][24:16] == 8'b00100001) begin  // x21
+                    if(ROBcheck[(ROBhead+1) % 64][7] == 1'b1) begin  // x21
                         $write("%0c", ROB[(ROBhead+1) % 64][23:16]);
                     end
                     else if((ROB[ROBhead+1][24:16] == 8'b00100101)) begin  //x 25
@@ -1097,7 +1097,7 @@ module main();
                 if((ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && !ROBcheck[(ROBhead + 1) % 64][6]) begin
                     
                     if(ROBcheck[(ROBhead+2)%64][5] == 1'b1) begin //IsTrapVector
-                        if(ROB[(ROBhead+2)%64][24:16] == 8'b00100001) begin  // x21
+                        if(ROBcheck[(ROBhead+2) % 64][7] == 1'b1) begin  // x21
                             $write("%0c", ROB[(ROBhead + 2) %64][23:16]);
                         end
                         else if((ROB[(ROBhead+2)%64][24:16] == 8'b00100101)) begin  //x 25
