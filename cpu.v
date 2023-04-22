@@ -1037,6 +1037,17 @@ module main();
 
     reg [15:0]cu_target;
 
+    wire [15:0]cu0_result = ROBhead == forwardA[21:16] ? forwardA[31:16] :
+                            ROBhead == forwardB[21:16] ? forwardB[31:16] :
+                            ROBhead == forwardC[21:16] ? forwardC[31:16] :
+                            ROBhead == forwardD[21:16] ? forwardD[31:16] :
+                            ROB[(ROBhead)][31:16];
+    // forward the val to be committed
+    wire [15:0]cu1_result = (ROBhead+1) % 64 == forwardA[21:16] ? forwardA[31:16] :
+                            (ROBhead+1) % 64 == forwardB[21:16] ? forwardB[31:16] :
+                            (ROBhead+1) % 64 == forwardC[21:16] ? forwardC[31:16] :
+                            (ROBhead+1) % 64 == forwardD[21:16] ? forwardD[31:16] :
+                            ROB[(ROBhead+1) % 64][31:16];
     //ROB Commit Unit
     always @(posedge clk) begin
         // TODO move all pc target logic here
@@ -1047,11 +1058,6 @@ module main();
                         (ROBcheck[(ROBhead + 2) % 64][6] === 1) ? ROB[ROBhead][15:0] : pc + 8;
 
         // Commit 0
-        wire [15:0]cu0_result = ROBhead == forwardA[21:16] ? forwardA[31:16] :
-                                ROBhead == forwardB[21:16] ? forwardB[31:16] :
-                                ROBhead == forwardC[21:16] ? forwardC[31:16] :
-                                ROBhead == forwardD[21:16] ? forwardD[31:16] :
-                                ROB[(ROBhead)][31:16];
         if(ROB[ROBhead][32] === 1'b1) begin
             if(ROBcheck[ROBhead][5] == 1'b1) begin //IsTrapVector
                 if(ROBcheck[ROBhead][7] == 1'b1) begin  // x21
@@ -1075,12 +1081,6 @@ module main();
 
 
             // Commit 1
-            // forward the val to be committed
-            wire [15:0]cu1_result = (ROBhead+1) % 64 == forwardA[21:16] ? forwardA[31:16] :
-                                    (ROBhead+1) % 64 == forwardB[21:16] ? forwardB[31:16] :
-                                    (ROBhead+1) % 64 == forwardC[21:16] ? forwardC[31:16] :
-                                    (ROBhead+1) % 64 == forwardD[21:16] ? forwardD[31:16] :
-                                    ROB[(ROBhead+1) % 64][31:16];
 
             if((ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6]) begin
                 
