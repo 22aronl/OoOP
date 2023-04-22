@@ -448,8 +448,8 @@ module main();
     //TODO: update rdara indexs
     wire [22:0] d2_rdataB0 = rdata[137:115];
     wire [22:0] d2_rdataB1 = rdata[114:92];
-    wire d2_lookB0_ = writeToRegA && (writeRegA == d2_regB0);
-    wire d2_lookB1_ = writeToRegA && (writeRegA == d2_regB1);
+    wire d2_lookB0_ = d2_writeToRegA && (d2_writeRegA == d2_regB0);
+    wire d2_lookB1_ = d2_writeToRegA && (d2_writeRegA == d2_regB1);
     wire [5:0]d2_lookB0 = d2_lookB0_ ? d2_tailA : d2_rdataB0[5:0];
     wire [5:0]d2_lookB1 = d2_is_brB ? (d2_tailB +63) % 64:
                             d2_lookB1_ ? d2_tailA : d2_rdataB1[5:0];
