@@ -511,6 +511,11 @@ module main();
     reg d2_is_ldunitC = 1'b0;
     reg d2_is_bunitC = 1'b0;
 
+    wire d2_lookC0_ = (d2_writeToRegA && (d2_writeRegA == d2_regC0)) ||
+                        (d2_writeToRegB && (d2_writeRegB == d2_regC0));
+    wire d2_lookC1_ = (d2_writeToRegA && (d2_writeRegA == d2_regC1)) ||
+                        (d2_writeToRegB && (d2_writeRegB == d2_regC1));
+
     wire [5:0]d2_lookC0 = d2_writeToRegB && 
                 (d2_writeRegB == d2_regC0) ? d2_tailB :                   // check in priority order
                 d2_writeToRegA && (d2_writeRegA == d2_regC0) ? d2_tailA : d2_rdataC0[5:0];
@@ -533,7 +538,8 @@ module main();
                                 (d2_rdataC1[6]) ? ROB[d2_rdataC1[5:0]] : 
                                 d2_rdataC1[22:7];
     
-    wire [1:0] d2_useC = {d2_useC_[1] & ROB[d2_lookC0][32] == 1'b0 & d2_rdataC0[6] == 1'b1, d2_useC_[0] & ROB[d2_lookC1][32] == 1'b0 & d2_rdataC1[6] == 1'b1};
+    wire [1:0] d2_useC = {(d2_useC_[1] & ROB[d2_lookC0][32] == 1'b0 & d2_rdataC0[6] == 1'b1)|d2_lookC0_, 
+                        (d2_useC_[0] & ROB[d2_lookC1][32] == 1'b0 & d2_rdataC1[6] == 1'b1)|d2_lookC1_};
     //TODO: Update ROBcheck with the computed values ehre too
 
     wire [56:0] d2_outputC = {d2_opcodeC, d2_tailC, d2_lookC0, d2_lookC1, d2_valueC0, d2_valueC1, d2_useC, d2_instructC[19]};
@@ -585,6 +591,13 @@ module main();
     reg d2_is_ldunitD = 1'b0;
     reg d2_is_bunitD = 1'b0;
 
+    wire d2_lookD0_ = d2_writeToRegC && (d2_writeRegC == d2_regD0)|
+                        d2_writeToRegB && (d2_writeRegB == d2_regD0)|
+                        d2_writeToRegA && (d2_writeRegA == d2_regD0);
+    wire d2_lookD1_ = d2_writeToRegC && (d2_writeRegC == d2_regD1)|
+                        d2_writeToRegB && (d2_writeRegB == d2_regD1)|
+                        d2_writeToRegA && (d2_writeRegA == d2_regD1);
+
     wire [5:0]d2_lookD0 = d2_writeToRegC && (d2_writeRegC == d2_regD0) ? d2_tailC :
                 d2_writeToRegB && (d2_writeRegB == d2_regD0) ? d2_tailB :
                 d2_writeToRegA && (d2_writeRegA == d2_regD0) ? d2_tailA : d2_rdataD0[5:0];
@@ -604,8 +617,7 @@ module main();
                                 (d2_instructD[8]) ? d2_offset6D :
                                 (d2_rdataD1[6]) ? ROB[d2_rdataD1[5:0]] : 
                                 d2_rdataD1[22:7];
-    
-    wire [1:0] d2_useD = {d2_useD_[1] & ROB[d2_lookD0][32] == 1'b0 & d2_rdataD0[6] == 1'b1, d2_useD_[0] & ROB[d2_lookD1][32] == 1'b0 & d2_rdataD1[6] == 1'b1};
+    wire [1:0] d2_useD = {d2_useD_[1] & ROB[d2_lookD0][32] == 1'b0 & d2_rdataD0[6] == 1'b1 | d2_lookD0, d2_useD_[0] & ROB[d2_lookD1][32] == 1'b0 & d2_rdataD1[6] == 1'b1 | d2_lookD1};
     //TODO: Update ROBcheck with the computed values ehre too
 
     wire [56:0] d2_outputD = {d2_opcodeD, d2_tailD, d2_lookD0, d2_lookD1, d2_valueD0, d2_valueD1, d2_useD, d2_instructD[19]};
@@ -847,7 +859,7 @@ module main();
 
     wire alu_unknown1 = ~((alu_opcode0 == 4'b0000) || (alu_opcode0 == 4'b0101) || (alu_opcode0 == 4'b1001));
 
-    wire [15:0] alu_out1 = (alu_opcode1 == 4'b0000) ? alu_value1A + alu_value1B :            // ADD
+    wire [15:0] alu_out1 = (alu_opcode1 == 4'b0001) ? alu_value1A + alu_value1B :            // ADD
                             (alu_opcode1 == 4'b0101) ? alu_value1A[4] & alu_value1B[4] :    // AND (based on bit 5)
                             (alu_opcode1 == 4'b1001) ? ~alu_value1A :                       // NOT
                             (alu_opcode1 == 4'b1111) ?  alu_value1A :                    // TRAP
