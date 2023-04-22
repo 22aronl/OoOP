@@ -1023,31 +1023,33 @@ module main();
 
     reg cu_flush = 1'b0;
 
-    reg cu_wen0 = ROB[ROBhead][32] & ROBcheck[ROBhead][3];
-    reg cu_wen1 = ROB[ROBhead][32] & (ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6];
-    reg cu_wen2;
+    wire cu_wen0 = ROB[ROBhead][32] & ROBcheck[ROBhead][3]; // if [4] then should be mem write enabled
+    wire cu_wen1 = ROB[ROBhead][32] & (ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6];
+    reg cu_wen2 = ROB[ROBhead][32] & (ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] & (ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && !ROBcheck[(ROBhead + 1) % 64][6];
 
-    reg [2:0] cu_waddr0 = ROBcheck[ROBhead][2:0];
-    reg [2:0] cu_waddr1 = ROBcheck[(ROBhead+1) % 64][2:0];
-    reg [2:0] cu_waddr2;
-
-    reg [15:0] cu_wdata0 = cu0_result;
-    reg [15:0] cu_wdata1 = cu1_result;
-    reg [15:0] cu_wdata2;
+    wire [2:0] cu_waddr0 = ROBcheck[ROBhead][2:0];
+    wire [2:0] cu_waddr1 = ROBcheck[(ROBhead+1) % 64][2:0];
+    reg [2:0] cu_waddr2 = ROBcheck[(ROBhead+2) % 64][2:0];
 
     reg [15:0]cu_target;
 
-    wire [15:0]cu0_result = ROBhead == forwardA[21:16] ? forwardA[31:16] :
-                            ROBhead == forwardB[21:16] ? forwardB[31:16] :
-                            ROBhead == forwardC[21:16] ? forwardC[31:16] :
-                            ROBhead == forwardD[21:16] ? forwardD[31:16] :
+    wire [15:0]cu_wdata0 = ROBhead === forwardA[21:16] ? forwardA[31:16] :
+                            ROBhead === forwardB[21:16] ? forwardB[31:16] :
+                            ROBhead === forwardC[21:16] ? forwardC[31:16] :
+                            ROBhead === forwardD[21:16] ? forwardD[31:16] :
                             ROB[(ROBhead)][31:16];
     // forward the val to be committed
-    wire [15:0]cu1_result = (ROBhead+1) % 64 == forwardA[21:16] ? forwardA[31:16] :
-                            (ROBhead+1) % 64 == forwardB[21:16] ? forwardB[31:16] :
-                            (ROBhead+1) % 64 == forwardC[21:16] ? forwardC[31:16] :
-                            (ROBhead+1) % 64 == forwardD[21:16] ? forwardD[31:16] :
+    wire [15:0]cu_wdata1 = (ROBhead+1) % 64 === forwardA[21:16] ? forwardA[31:16] :
+                            (ROBhead+1) % 64 === forwardB[21:16] ? forwardB[31:16] :
+                            (ROBhead+1) % 64 === forwardC[21:16] ? forwardC[31:16] :
+                            (ROBhead+1) % 64 === forwardD[21:16] ? forwardD[31:16] :
                             ROB[(ROBhead+1) % 64][31:16];
+
+    wire [15:0]cu_wdata2 = (ROBhead+2) % 64 === forwardA[21:16] ? forwardA[31:16] :
+                            (ROBhead+2) % 64 === forwardB[21:16] ? forwardB[31:16] :
+                            (ROBhead+2) % 64 === forwardC[21:16] ? forwardC[31:16] :
+                            (ROBhead+2) % 64 === forwardD[21:16] ? forwardD[31:16] :
+                            ROB[(ROBhead+2) % 64][31:16];
     //ROB Commit Unit
     always @(posedge clk) begin
         // TODO move all pc target logic here
@@ -1067,20 +1069,7 @@ module main();
                     $finish();
                 end 
             end
-            // else if(ROBcheck[ROBhead][4] == 1'b1) begin
-            //     // send sinal to aaron
-            // end
-            // else if(ROBcheck[ROBhead][3] == 1'b1) begin
-            //     cu_wen0 <= 1; // conflicts resolved by regs.v
-            //     cu_waddr0 <= ROBcheck[ROBhead][2:0];
-            //     cu_wdata0 <= cu0_result;
-            // end
-            // else begin
-            //     cu_wen0 <= 0;           
-            // end
             ROBhead <= (ROBhead + 1) % 64;
-
-
             // Commit 1
 
             if((ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6]) begin
@@ -1093,17 +1082,6 @@ module main();
                         $finish();
                     end
                 end
-                // else if(ROBcheck[(ROBhead+1) % 64][4] == 1'b1) begin
-                //     //Is Store
-                // end
-                // else if(ROBcheck[(ROBhead+1) % 64][3] == 1'b1) begin
-                //     cu_wen1 <= 1;
-                //     cu_waddr1 <= ROBcheck[(ROBhead+1) % 64][2:0];
-                //     cu_wdata1 <= cu1_result[15:0];
-                // end
-                // else begin
-                //     cu_wen1 <= 0;           
-                // end
                 ROBhead <= (ROBhead + 1) % 64;
                 // Commit 2
                 if((ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && !ROBcheck[(ROBhead + 1) % 64][6]) begin
@@ -1116,22 +1094,9 @@ module main();
                             $finish();
                         end 
                     end
-                    else if(ROBcheck[(ROBhead+2)%64][4] == 1'b1) begin
-                        //Is Store
-                    end
-                    else if(ROBcheck[(ROBhead+2)%64][3] == 1'b1) begin
-                        cu_wen2 <= 1;
-                        cu_waddr2 <= ROBcheck[(ROBhead+2)%64][2:0];
-                        cu_wdata2 <= ROB[(ROBhead+2)%64][31:16];
-                    end
-                    else begin
-                        cu_wen2 <= 0;           
-                    end
                     ROBhead <= (ROBhead + 1) % 64;
-
                 end
             end
         end
     end
-
 endmodule
