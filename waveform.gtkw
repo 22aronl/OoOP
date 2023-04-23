@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.108 (w)1999-2020 BSI
-[*] Sat Apr 22 23:22:39 2023
+[*] Sun Apr 23 01:54:44 2023
 [*]
-[dumpfile] "C:\Users\Aaron Lo\Documents\cs429h\OOOP\t1.vcd"
-[dumpfile_mtime] "Sat Apr 22 22:24:32 2023"
-[dumpfile_size] 73668
+[dumpfile] "C:\Users\Aaron Lo\Documents\cs429h\OOOP\t2.vcd"
+[dumpfile_mtime] "Sun Apr 23 01:54:00 2023"
+[dumpfile_size] 115208
 [savefile] "C:\Users\Aaron Lo\Documents\cs429h\OOOP\waveform.gtkw"
-[timestart] 0
-[size] 1677 790
+[timestart] 10080
+[size] 1677 789
 [pos] -1 -1
-*-11.713507 5590 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-11.713507 13000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] main.
 [sst_width] 254
 [signals_width] 198
@@ -84,14 +84,15 @@ main.writeToRegD
 main.writeRegD[2:0]
 main.regD0[2:0]
 main.regD1[2:0]
+main.useD[1:0]
 @1401200
 -decodeD
 -decode
-@800200
+@c00200
 -decode 2
 @22
 main.d2_opcodeA[3:0]
-@800200
+@c00200
 -decode2_A
 @22
 main.d2_tailA[5:0]
@@ -139,10 +140,14 @@ main.d2_valueA1[15:0]
 @28
 main.d2_useA[1:0]
 main.robLookA0
-@1000200
+@1401200
 -decode2_A
+@22
+main.d2_tailB[5:0]
 @28
 main.d2_useB[1:0]
+main.d2_writeRegB[2:0]
+main.d2_writeToRegB
 @c00022
 main.d2_lookB0[5:0]
 @28
@@ -154,11 +159,42 @@ main.d2_lookB0[5:0]
 (5)main.d2_lookB0[5:0]
 @1401200
 -group_end
-@28
+@c00028
 main.regB0[2:0]
+@28
+(0)main.regB0[2:0]
+(1)main.regB0[2:0]
+(2)main.regB0[2:0]
+@1401200
+-group_end
+@28
+main.d2_useB[1:0]
+@c00200
+-decode2_C
+@22
+main.d2_tailC[5:0]
+@28
+main.d2_lookC0_
+@22
+main.d2_lookC0[5:0]
+@28
+main.d2_writeRegC[2:0]
+main.d2_writeToRegC
+main.d2_useC_[1:0]
+main.d2_useC[1:0]
+@1401200
+-decode2_C
+@c00200
+-decode2_D
+@28
+main.d2_lookD0_
+main.d2_lookD1_
 @22
 main.d2_lookD0[5:0]
 main.d2_lookD1[5:0]
+@28
+main.d2_regD0[2:0]
+main.d2_regD1[2:0]
 @c00022
 main.d2_outputD[56:0]
 @28
@@ -221,13 +257,21 @@ main.d2_outputD[56:0]
 (56)main.d2_outputD[56:0]
 @1401200
 -group_end
-@1000200
+@22
+main.d2_valueD0[15:0]
+main.d2_valueD1[15:0]
+@28
+main.d2_useD[1:0]
+@1401200
+-decode2_D
 -decode 2
-@800200
+@c00200
 -decodeA
 @28
 main.is_aluunitA
 main.is_ldunitA
+@22
+main.ROBhead[5:0]
 @c00200
 -d1_instructA
 @28
@@ -253,7 +297,6 @@ main.is_trapA
 main.is_validA
 @1401200
 -d1_instructA
-@1000200
 -decodeA
 @c00200
 -alu_queue
@@ -330,34 +373,8 @@ main.alu_queue.head[5:0]
 main.alu_queue.tail[5:0]
 main.alu_queue.outOperation0[56:0]
 main.alu_queue.outOperation1[56:0]
-@1401200
--alu_queue
 @c00200
--alu_unit_0
-@c00022
-main.alu_opcode0[3:0]
-@28
-(0)main.alu_opcode0[3:0]
-(1)main.alu_opcode0[3:0]
-(2)main.alu_opcode0[3:0]
-(3)main.alu_opcode0[3:0]
-@1401200
--group_end
-@22
-main.alu_rob0[5:0]
-main.alu_value0A[15:0]
-main.alu_value0B[15:0]
-@28
-main.alu_valid0
-@22
-main.alu_out0[15:0]
-@28
-main.alu_unknown0
-main.condition_code_A[2:0]
-@22
-main.forwardA[22:0]
-@1401200
--alu_unit_0
+-alu_queue_part
 @22
 main.ROBhead[5:0]
 @c00022
@@ -462,6 +479,8 @@ main.alu_queue_out0[56:0]
 -group_end
 @22
 main.alu_queue_out1[56:0]
+main.alu_queue_ROBC[5:0]
+main.alu_queue_ROBD[5:0]
 main.alu_queue_lookC0[5:0]
 main.alu_queue_lookC1[5:0]
 @c00022
@@ -488,6 +507,35 @@ main.alu_queue_useD[1:0]
 -group_end
 @28
 main.alu_queue_used[1:0]
+@1401200
+-alu_queue_part
+-alu_queue
+@c00200
+-alu_unit_0
+@c00022
+main.alu_opcode0[3:0]
+@28
+(0)main.alu_opcode0[3:0]
+(1)main.alu_opcode0[3:0]
+(2)main.alu_opcode0[3:0]
+(3)main.alu_opcode0[3:0]
+@1401200
+-group_end
+@22
+main.alu_rob0[5:0]
+main.alu_value0A[15:0]
+main.alu_value0B[15:0]
+@28
+main.alu_valid0
+@22
+main.alu_out0[15:0]
+@28
+main.alu_unknown0
+main.condition_code_A[2:0]
+@22
+main.forwardA[22:0]
+@1401200
+-alu_unit_0
 @c00200
 -alu_rs_0
 @22
@@ -519,7 +567,7 @@ main.alu_rs0.inOperationRob[5:0]
 -alu_rs_0
 @c00200
 -alu_rs_1
-@800022
+@c00022
 main.alu_rs1.commited[0:4]
 @28
 (0)main.alu_rs1.commited[0:4]
@@ -527,7 +575,7 @@ main.alu_rs1.commited[0:4]
 (2)main.alu_rs1.commited[0:4]
 (3)main.alu_rs1.commited[0:4]
 (4)main.alu_rs1.commited[0:4]
-@1001200
+@1401200
 -group_end
 @c00022
 main.alu_rs1.inOperation[56:0]
@@ -597,13 +645,18 @@ main.alu_rs1.operationUsed
 main.alu_rs1.outOperationValid
 @22
 main.alu_rs1.outOperation[41:0]
+main.alu_rs1.inOperationRob[5:0]
+main.alu_rs1.inOperationLookA[5:0]
+main.alu_rs1.inOperationLookB[5:0]
+@28
+main.alu_rs1.inOperationUse[1:0]
 @1401200
 -alu_rs_1
-@800200
+@c00200
 -forward
-@c00023
+@c00022
 main.forwardA[22:0]
-@29
+@28
 (0)main.forwardA[22:0]
 (1)main.forwardA[22:0]
 (2)main.forwardA[22:0]
@@ -627,14 +680,14 @@ main.forwardA[22:0]
 (20)main.forwardA[22:0]
 (21)main.forwardA[22:0]
 (22)main.forwardA[22:0]
-@1401201
+@1401200
 -group_end
-@23
+@22
 main.forwardAROB[5:0]
 main.forwardAValue[15:0]
-@c00023
+@c00022
 main.forwardB[22:0]
-@29
+@28
 (0)main.forwardB[22:0]
 (1)main.forwardB[22:0]
 (2)main.forwardB[22:0]
@@ -658,14 +711,14 @@ main.forwardB[22:0]
 (20)main.forwardB[22:0]
 (21)main.forwardB[22:0]
 (22)main.forwardB[22:0]
-@1401201
+@1401200
 -group_end
-@23
+@22
 main.forwardBROB[5:0]
 main.forwardBValue[15:0]
 main.forwardC[22:0]
 main.forwardD[22:0]
-@1000200
+@1401200
 -forward
 @c00200
 -alu_unit_1

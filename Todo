@@ -10,4 +10,9 @@ Halt using the halt signal, not calling $finish
 
 Instructions That Work:
 
+
+addr
 addi
+andi
+andr
+not

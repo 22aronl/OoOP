@@ -274,7 +274,7 @@ module main();
     wire [15:0] pc_offset11C = {{5{instructC[10]}}, instructC[10:0]};
     wire [15:0] offset6C = {{11{instructC[5]}}, instructC[4:0]};
 
-    wire useC0 = is_addrC | is_addiC | is_andrC | is_andiC | is_jmpC | is_jsrrC | is_ldrC | is_notC;
+    wire useC0 = is_addrC | is_addiC | is_andrC | is_andiC | is_jmpC | is_jsrrC | is_ldrC | is_notC | is_trapC;
     wire useC1 = is_addrC | is_andrC | is_brC;
     wire [1:0] useC = {useC0, useC1};
 
@@ -770,14 +770,21 @@ module main();
 
     wire alu_queue_used_0;
     wire alu_queue_used_1;
-    wire [1:0] alu_queue_used = {alu_queue_used_0 & alu_queue_used_1, alu_queue_used_0 ^ alu_queue_used_1};
-    wire [56:0] alu_queue_out0;
-    wire [56:0] alu_queue_out1;
+    wire [1:0] alu_queue_used = {alu_queue_used_0 & alu_queue_used_1 & alu_queue_valid0 & alu_queue_valid1, (alu_queue_used_0 & alu_queue_valid0) ^ (alu_queue_used_1 & alu_queue_valid1)};
+    wire [56:0] alu_queue_out0_;
+    wire [56:0] alu_queue_out1_;
+    wire alu_queue_valid0 = alu_queue_out0_[56] === 1'b1;
+    wire alu_queue_valid1 = alu_queue_out1_[56] === 1'b1;
 
+    wire [56:0] alu_queue_out0 = alu_queue_out0_;
+    wire [56:0] alu_queue_out1 = alu_queue_used == 2'b01 ? alu_queue_out0_ : alu_queue_out1_;
+
+    wire [5:0] alu_queue_ROBC = alu_queue_out0[51:46];
     wire [5:0] alu_queue_lookC0 = alu_queue_out0[45:40];
     wire [5:0] alu_queue_lookC1 = alu_queue_out0[39:34];
     wire [1:0] alu_queue_useC = alu_queue_out0[1:0];
 
+    wire [5:0] alu_queue_ROBD = alu_queue_out1[51:46];
     wire [5:0] alu_queue_lookD0 = alu_queue_out1[45:40];
     wire [5:0] alu_queue_lookD1 = alu_queue_out1[39:34];
     wire [1:0] alu_queue_useD = alu_queue_out1[1:0];
@@ -792,8 +799,8 @@ module main();
         .inOperation1(alu_feederB[56:53]), .inROB1(alu_feederB[52:47]), .inLook1A(alu_feederB[46:41]), .inLook1B(alu_feederB[40:35]), .inValue1A(alu_feederB[34:19]), .inValue1B(alu_feederB[18:3]), .inUse1(alu_feederB[2:1]), .inReady1(alu_feederB[0] & alu_feedervalidB),
         .inOperation2(alu_feederC[56:53]), .inROB2(alu_feederC[52:47]), .inLook2A(alu_feederC[46:41]), .inLook2B(alu_feederC[40:35]), .inValue2A(alu_feederC[34:19]), .inValue2B(alu_feederC[18:3]), .inUse2(alu_feederC[2:1]), .inReady2(alu_feederC[0] & alu_feedervalidC),
         .inOperation3(alu_feederD[56:53]), .inROB3(alu_feederD[52:47]), .inLook3A(alu_feederD[46:41]), .inLook3B(alu_feederD[40:35]), .inValue3A(alu_feederD[34:19]), .inValue3B(alu_feederD[18:3]), .inUse3(alu_feederD[2:1]), .inReady3(alu_feederD[0] & alu_feedervalidD),
-        .outOperation0(alu_queue_out0),
-        .outOperation1(alu_queue_out1)
+        .outOperation0(alu_queue_out0_),
+        .outOperation1(alu_queue_out1_)
     );
 
     wire [41:0] alu_rs_0_out;
@@ -820,7 +827,7 @@ module main();
     //////////////
 
     // TODO: get condition flags from result of pc - 2
-    wire [1:0] bu_buq_used = {1'b0, buq_used};
+    wire [1:0] bu_buq_used = {1'b0, buq_used & (buq_out[56] === 1'b1)};
     wire buq_used;
     wire [56:0] buq_out;
 
@@ -859,10 +866,9 @@ module main();
     reg [15:0] alu_value0B;
     reg alu_valid0 = 1'b0;
 
-    //TODO: Add in LEA for alu
     wire alu_unknown0 = ~((alu_opcode0 == 4'b0001) || (alu_opcode0 == 4'b0101) || (alu_opcode0 == 4'b1001));
 
-    wire [15:0] alu_out0 = (alu_opcode0 == 4'b0001) ? alu_value0A + alu_value0B :           // ADD
+    wire [15:0] alu_out0 = (alu_opcode0 == 4'b0001 | alu_opcode0 == 4'b1110) ? alu_value0A + alu_value0B :           // ADD
                             (alu_opcode0 == 4'b0101) ? alu_value0A & alu_value0B :    // AND (based on bit 5)
                             (alu_opcode0 == 4'b1001) ? ~alu_value0A :                       // NOT
                             (alu_opcode0 == 4'b1111) ?  alu_value0A :                   // TRAP
@@ -871,7 +877,7 @@ module main();
     wire [5:0] forwardAROB = alu_rob0;
     wire [15:0] forwardAValue = alu_out0;
     assign forwardA = {alu_valid0, alu_rob0, alu_out0};
-    wire [2:0] condition_code_A = (alu_opcode0 == 4'b0001) | (alu_opcode0 == 4'b0101) | (alu_opcode0 == 4'b1001) ?
+    wire [2:0] condition_code_A = (alu_opcode0 == 4'b0001) | (alu_opcode0 == 4'b0101) | (alu_opcode0 == 4'b1001) | (alu_opcode0 == 4'b1110) ?
                                     {1'b1, alu_out0[15], alu_out0 == 0, ~alu_out0[15], alu_rob0} : 0;
 
     always @(posedge clk) begin
@@ -892,7 +898,7 @@ module main();
 
     wire alu_unknown1 = ~((alu_opcode0 == 4'b0000) || (alu_opcode0 == 4'b0101) || (alu_opcode0 == 4'b1001));
 
-    wire [15:0] alu_out1 = (alu_opcode1 == 4'b0001) ? alu_value1A + alu_value1B :            // ADD
+    wire [15:0] alu_out1 = (alu_opcode1 == 4'b0001 | alu_opcode1 == 4'b1110) ? alu_value1A + alu_value1B :            // ADD
                             (alu_opcode1 == 4'b0101) ? alu_value1A & alu_value1B :    // AND (based on bit 5)
                             (alu_opcode1 == 4'b1001) ? ~alu_value1A :                       // NOT
                             (alu_opcode1 == 4'b1111) ?  alu_value1A :                    // TRAP
@@ -901,7 +907,7 @@ module main();
     wire [5:0] forwardBROB = alu_rob1;
     wire [15:0] forwardBValue = alu_out1;
     assign forwardB = {alu_valid1, alu_rob1, alu_out1};
-    wire [2:0] condition_code_B = (alu_opcode1 == 4'b0001) | (alu_opcode1 == 4'b0101) | (alu_opcode1 == 4'b1001) ?
+    wire [2:0] condition_code_B = (alu_opcode1 == 4'b0001) | (alu_opcode1 == 4'b0101) | (alu_opcode1 == 4'b1001) | (alu_opcode1 == 4'b1110) ?
                                     {1'b1, alu_out1[15], alu_out1 == 0, ~alu_out1[15], alu_rob1} : 0;
 
     always @(posedge clk) begin
@@ -1071,9 +1077,9 @@ module main();
 
     reg cu_flush = 1'b0;
 
-    wire cu_wen0 = ROB[ROBhead][32] & ROBcheck[ROBhead][3]; // if [4] then should be mem write enabled
-    wire cu_wen1 = ROB[ROBhead][32] & (ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6];
-    wire cu_wen2 = ROB[ROBhead][32] & (ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] & (ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && !ROBcheck[(ROBhead + 1) % 64][6];
+    wire cu_wen0 = ROB[ROBhead][32] && ROBcheck[ROBhead][3]; // if [4] then should be mem write enabled
+    wire cu_wen1 = ROB[ROBhead][32] && (ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6];
+    wire cu_wen2 = ROB[ROBhead][32] && (ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && (ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && !ROBcheck[(ROBhead + 1) % 64][6];
 
     wire [2:0] cu_waddr0 = ROBcheck[ROBhead][2:0];
     wire [2:0] cu_waddr1 = ROBcheck[(ROBhead+1) % 64][2:0];
@@ -1135,7 +1141,7 @@ module main();
                         $finish();
                     end
                 end
-                ROBhead <= (ROBhead + 1) % 64;
+                ROBhead <= (ROBhead + 2) % 64;
                 // Commit 2
                 if((ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && !ROBcheck[(ROBhead + 1) % 64][6]) begin
                     
@@ -1147,7 +1153,7 @@ module main();
                             $finish();
                         end 
                     end
-                    ROBhead <= (ROBhead + 1) % 64;
+                    ROBhead <= (ROBhead + 3) % 64;
                 end
             end
         end

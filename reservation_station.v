@@ -25,7 +25,7 @@ module reservation_station(input clk, input flush,
     wire committed3 = commited[3];
     wire committed4 = commited[4];
 
-    assign operationUsed = (!commited[0] | !commited[1] | !commited[2] | !commited[3] | !commited[4]) & inOperation[56];
+    assign operationUsed = (!commited[0] | !commited[1] | !commited[2] | !commited[3] | !commited[4]);
     integer i;
 
     assign outOperationValid = (commited[0] & operation[0][1:0] === 2'b00) | (commited[1] & operation[1][1:0] === 2'b00) | (commited[2] & operation[2][1:0] === 2'b00) | (commited[3] & operation[3][1:0] === 2'b00) | (commited[4] & operation[4][1:0] === 2'b00);
@@ -49,7 +49,7 @@ module reservation_station(input clk, input flush,
                 commited[i] <= 1'b0;
         end
         else begin
-            if(operationUsed) begin
+            if(operationUsed && inOperation[56]) begin
                 if(!commited[0]) begin
                     operation[0] <= inOperation;
                     commited[0] <= 1'b1;
