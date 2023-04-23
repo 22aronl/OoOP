@@ -167,7 +167,7 @@ module main();
     wire is_bunitA = is_brA | is_jmpA | is_jsrA | is_jsrrA;
 
     wire [15:0] imm5A = {{12{instructA[4]}}, instructA[3:0]};
-    wire [15:0] pc_offset11A = {{5{instructA[10]}}, instructA[10:0]};
+    wire [15:0] pc_offset11A = {{4{instructA[11]}}, instructA[11:0]};
     wire [15:0] offset6A = {{11{instructA[5]}}, instructA[4:0]};
 
     wire useA0 = is_addrA | is_addiA | is_andrA | is_andiA | is_jmpA | is_jsrrA | is_ldrA | is_notA | is_stA | is_stiA | is_strA | is_trapA;
@@ -221,7 +221,7 @@ module main();
     wire is_aluunitB = is_addrB | is_addiB | is_andrB | is_andiB | is_notB | is_leaB | is_trapB;
 
     wire [15:0] imm5B = {{12{instructB[4]}}, instructB[3:0]};
-    wire [15:0] pc_offset11B = {{8{instructB[8]}}, instructB[7:0]};
+    wire [15:0] pc_offset11B = {{4{instructB[11]}}, instructB[11:0]};
     wire [15:0] offset6B = {{11{instructB[5]}}, instructB[4:0]};
 
     wire useB0 = is_addrB | is_addiB | is_andrB | is_andiB | is_jmpB | is_jsrrB | is_ldrB | is_notB | is_stB | is_stiB | is_strB | is_trapB;
@@ -276,7 +276,7 @@ module main();
 
 
     wire [15:0] imm5C = {{12{instructC[4]}}, instructC[3:0]};
-    wire [15:0] pc_offset11C = {{5{instructC[10]}}, instructC[10:0]};
+    wire [15:0] pc_offset11C = {{4{instructC[11]}}, instructC[11:0]};
     wire [15:0] offset6C = {{11{instructC[5]}}, instructC[4:0]};
 
     wire useC0 = is_addrC | is_addiC | is_andrC | is_andiC | is_jmpC | is_jsrrC | is_ldrC | is_notC | is_stC | is_stiC | is_strC | is_trapC;
@@ -331,7 +331,7 @@ module main();
 
 
     wire [15:0] imm5D = {{12{instructD[4]}}, instructD[3:0]};
-    wire [15:0] pc_offset11D = {{5{instructD[10]}}, instructD[10:0]};
+    wire [15:0] pc_offset11D = {{4{instructD[11]}}, instructD[11:0]};
     wire [15:0] offset6D = {{11{instructD[5]}}, instructD[4:0]};
 
     wire useD0 = is_addrD | is_addiD | is_andrD | is_andiD | is_jmpD | is_jsrrD | is_ldrD | is_notD | is_stD | is_stiD | is_strD | is_trapD;
@@ -960,8 +960,8 @@ module main();
     reg [3:0] bu_opcode;
     reg [5:0] bu_rob;
     reg [15:0] bu_pcval;
-    reg [10:0] bu_pcoffset11;
-    reg bu_rflag; // IMPLEMENT THIS
+    reg [11:0] bu_pcoffset11;
+    reg bu_rflag;
 
     wire [3:0] bu_nzp = ROB_condition_codes[(bu_rob +63)%64 ];
 
@@ -970,8 +970,7 @@ module main();
     wire bu_is_jmp = (bu_opcode == 4'b1100);
     wire bu_is_jsr = (bu_opcode == 4'b0100);
     wire bu_is_br = (bu_opcode == 4'b0000);
-    wire [15:0] bu_pc_offset = {{5{bu_pcoffset11[10]}}, bu_pcoffset11[10:0]};
-    wire [15:0]target = bu_is_jmp ? bu_value :
+    wire [15:0]target = bu_is_jmp ? bu_pcval :
                         bu_is_jsr ?
                             (bu_rflag === 0) ? bu_pcval :
                             (bu_pcval + 2) + {{5{bu_pcoffset11[10]}}, {bu_pcoffset11[10:0]}} :
@@ -997,6 +996,7 @@ module main();
         bu_rob <= bu_rs_out[37:32];
         bu_pcval <= bu_rs_out[31:16];
         bu_pcoffset11 <= bu_rs_out[10:0];
+        bu_rflag <= bu_rs_out[15];
     end
 
 
@@ -1046,7 +1046,7 @@ module main();
     wire [15:0] lsu_data;
     wire [5:0] lsu_rob;
     wire lsu_out_valid;
-    assign lsu_used = lsu_out[2:1] === 2'b00;
+    assign lsu_used = lsu_out[56] === 1'b1 && lsu_out[1:0] === 2'b00;
     wire load_flush = 1'b0;
     wire [1:0] store_buffer_commit = 2'b00;
     wire [4:0] load_opcode = lsu_out[55:52];
