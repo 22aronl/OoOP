@@ -414,7 +414,7 @@ module main();
                                 d2_instructA[13] ? {16{1'b0}} : // ret
                                 d2_rdataA0[6] ? ROB[d2_rdataA0[5:0]] : 
                                 d2_rdataA0[22:7];
-    wire [15:0] d2_valueA1 = (d2_instructA[12] | d2_instructA[14] | d2_instructA[10] | d2_instructA[9] | d2_instructA[7] | d2_instructA[0]) ? d2_pc_offset11A : 
+    wire [15:0] d2_valueA1 = (d2_instructA[12] | d2_instructA[14] | d2_instructA[10] | d2_instructA[9] | d2_instructA[7] | d2_instructB[3] | d2_instructB[2] | d2_instructA[0]) ? d2_pc_offset11A : 
                                 d2_instructA[11] ? {16{1'b0}} : // jsrr
                                 (d2_instructA[17] | d2_instructA[15]) ? d2_imm5A :
                                 (d2_instructA[8]) ? d2_offset6A :
@@ -481,7 +481,7 @@ module main();
     wire [5:0]d2_lookB1 = d2_is_brB ? (d2_tailB +63) % 64:
                             d2_lookB1_ ? d2_tailA : d2_rdataB1[5:0];
 
-    wire [15:0] d2_valueB0 = (d2_instructB[12] | d2_instructB[14] | d2_instructB[10] | d2_instructB[9] | d2_instructB[7] | d2_instructB[3] | d2_instructB[2]) ? d1_pcB :
+    wire [15:0] d2_valueB0 = (d2_instructB[12] | d2_instructB[14] | d2_instructB[10] | d2_instructB[9] | d2_instructB[7]) ? d1_pcB :
                                 d2_instructB[13] ? {16{1'b0}} : // ret
                                 d2_rdataB0[6] ? ROB[d2_rdataB0[5:0]] : 
                                 d2_rdataB0[22:7];
@@ -555,7 +555,7 @@ module main();
                 //TODO: WHY??
 
 
-    wire [15:0] d2_valueC0 = (d2_instructC[12] | d2_instructC[14] | d2_instructC[10] | d2_instructC[9] | d2_instructC[7] | d2_instructC[3] | d2_instructC[2]) ? d1_pcC :
+    wire [15:0] d2_valueC0 = (d2_instructC[12] | d2_instructC[14] | d2_instructC[10] | d2_instructC[9] | d2_instructC[7]) ? d1_pcC :
                                 d2_instructC[13] ? {16{1'b0}} : // ret
                                 d2_rdataC0[6] ? ROB[d2_rdataC0[5:0]] : 
                                 d2_rdataC0[22:7];
@@ -637,7 +637,7 @@ module main();
                 d2_writeToRegB && (d2_writeRegB == d2_regD1) ? d2_tailB :
                 d2_writeToRegA && (d2_writeRegA == d2_regD1) ? d2_tailA : d2_rdataD1[5:0];
 
-    wire [15:0] d2_valueD0 = (d2_instructD[12] | d2_instructD[14] | d2_instructD[10] | d2_instructD[9] | d2_instructD[7] | d2_instructD[3] | d2_instructD[2]) ? d1_pcD :
+    wire [15:0] d2_valueD0 = (d2_instructD[12] | d2_instructD[14] | d2_instructD[10] | d2_instructD[9] | d2_instructD[7]) ? d1_pcD :
                                 d2_instructD[13] ? {16{1'b0}} : // ret
                                 d2_rdataD0[6] ? ROB[d2_rdataD0[5:0]] : 
                                 d2_rdataD0[22:7];
@@ -706,10 +706,10 @@ module main();
         if(is_validA)
             ROBtail <= (ROBtail + 4) % 64;
 
-        ROBcheck[d1_tailA] <= {offset6A, is_trapA, is_storeA, writeToRegA, writeRegA};
-        ROBcheck[d1_tailB] <= {offset6B, is_trapB, is_storeB, writeToRegB, writeRegB};
-        ROBcheck[d1_tailC] <= {offset6C, is_trapC, is_storeC, writeToRegC, writeRegC};
-        ROBcheck[d1_tailD] <= {offset6D, is_trapD, is_storeD, writeToRegD, writeRegD};
+        ROBcheck[d1_tailA][11:0] <= {offset6A, is_trapA, is_storeA, writeToRegA, writeRegA};
+        ROBcheck[d1_tailB][11:0] <= {offset6B, is_trapB, is_storeB, writeToRegB, writeRegB};
+        ROBcheck[d1_tailC][11:0] <= {offset6C, is_trapC, is_storeC, writeToRegC, writeRegC};
+        ROBcheck[d1_tailD][11:0] <= {offset6D, is_trapD, is_storeD, writeToRegD, writeRegD};
     end
 
 
@@ -990,7 +990,7 @@ module main();
 
     wire [5:0] forwardCROB = bu_rob;
     wire [15:0] forwardCValue = target;
-    assign forwardC = {bu_jmp && bu_valid, bu_rob, target};
+    assign forwardC = {bu_jmp && bu_valid, bu_rob[5:0], target[15:0]};
 
     always @(posedge clk) begin
         bu_valid <= bu_rs_valid;
@@ -1102,13 +1102,13 @@ module main();
     wire [2:0] cu_waddr1 = ROBcheck[(ROBhead+1) % 64][2:0];
     wire [2:0] cu_waddr2 = ROBcheck[(ROBhead+2) % 64][2:0];
 
-    wire [15:0]cu_target = ((ROBcheck[ROBhead][12] === 1) & (ROBhead === forwardC[21:16])) ? forwardC[31:16] : // forward from bu
+    wire [15:0]cu_target = ((bu_jmp) & (ROBhead === forwardC[21:16])) ? forwardC[31:16] : // forward from bu
                             (ROBcheck[ROBhead][12] === 1) ? ROB[ROBhead][31:16] :                       // commit instr #1
                             
-                            ((ROBcheck[(ROBhead + 1) % 64][12] === 1) & (((ROBhead + 1)%64) === forwardC[21:16])) ? forwardC[31:16] :
+                            ((bu_jmp & (((ROBhead + 1)%64) === forwardC[21:16])) ? forwardC[31:16] :
                             (ROBcheck[(ROBhead + 1) % 64][12] === 1) ? ROB[(ROBhead + 1) % 64][31:16] : // commit instr #2
 
-                            ((ROBcheck[(ROBhead + 2) % 64][12]) === 1 & (((ROBhead + 2)%64) === forwardC[21:16])) ? forwardC[31:16] :
+                            ((bu_jmp & (((ROBhead + 2)%64) === forwardC[21:16])) ? forwardC[31:16] :
                             (ROBcheck[(ROBhead + 2) % 64][12] === 1) ? ROB[(ROBhead + 2) % 64][31:16] : // commit instr #3
                             
                              pc + 8;
