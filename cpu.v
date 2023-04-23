@@ -224,7 +224,7 @@ module main();
     wire [15:0] pc_offset11B = {{8{instructB[8]}}, instructB[7:0]};
     wire [15:0] offset6B = {{11{instructB[5]}}, instructB[4:0]};
 
-    wire useB0 = is_addrB | is_addiB | is_andrB | is_andiB | is_jmpB | is_jsrrB | is_ldrB | is_notB | is_trapB;
+    wire useB0 = is_addrB | is_addiB | is_andrB | is_andiB | is_jmpB | is_jsrrB | is_ldrB | is_notB | is_stB | is_stiB | is_strB | is_trapB;
     wire useB1 = is_addrB | is_andrB | is_strB;
     wire [1:0] useB = {useB0, useB1};
 
@@ -279,7 +279,7 @@ module main();
     wire [15:0] pc_offset11C = {{5{instructC[10]}}, instructC[10:0]};
     wire [15:0] offset6C = {{11{instructC[5]}}, instructC[4:0]};
 
-    wire useC0 = is_addrC | is_addiC | is_andrC | is_andiC | is_jmpC | is_jsrrC | is_ldrC | is_notC | is_trapC;
+    wire useC0 = is_addrC | is_addiC | is_andrC | is_andiC | is_jmpC | is_jsrrC | is_ldrC | is_notC | is_stC | is_stiC | is_strC | is_trapC;
     wire useC1 = is_addrC | is_andrC | is_strC | is_brC;
     wire [1:0] useC = {useC0, useC1};
 
@@ -334,7 +334,7 @@ module main();
     wire [15:0] pc_offset11D = {{5{instructD[10]}}, instructD[10:0]};
     wire [15:0] offset6D = {{11{instructD[5]}}, instructD[4:0]};
 
-    wire useD0 = is_addrD | is_addiD | is_andrD | is_andiD | is_jmpD | is_jsrrD | is_ldrD | is_notD | is_trapD;
+    wire useD0 = is_addrD | is_addiD | is_andrD | is_andiD | is_jmpD | is_jsrrD | is_ldrD | is_notD | is_stD | is_stiD | is_strD | is_trapD;
     wire useD1 = is_addrD | is_andrD | is_strD;
     wire [1:0] useD = {useD0, useD1};
 
@@ -983,10 +983,9 @@ module main();
     // wire bu_br_cond = (is_br && ((bu_n && bu_nzp[2]) || (bu_z && bu_nzp[1]) || (bu_p && bu_nzp[0])));
     wire bu_br_cond = 1'b0;
 
-    wire bu_jmp = bu_is_jmp ||
+    wire bu_jmp = bu_valid && (bu_is_jmp ||
                 bu_is_jsr ||
-                bu_is_br && (bu_br_cond) ||
-                0;
+                (bu_is_br && (bu_br_cond)));
 
     wire [5:0] forwardCROB = bu_rob;
     wire [15:0] forwardCValue = target;
@@ -994,8 +993,8 @@ module main();
 
     always @(posedge clk) begin
         bu_valid <= bu_rs_valid;
-        bu_opcode <= bu_rs_out[40:37];
-        bu_rob <= bu_rs_out[36:32];
+        bu_opcode <= bu_rs_out[41:38];
+        bu_rob <= bu_rs_out[37:32];
         bu_pcval <= bu_rs_out[31:16];
         bu_pcoffset11 <= bu_rs_out[10:0];
     end
@@ -1102,33 +1101,33 @@ module main();
     wire [2:0] cu_waddr1 = ROBcheck[(ROBhead+1) % 64][2:0];
     wire [2:0] cu_waddr2 = ROBcheck[(ROBhead+2) % 64][2:0];
 
-    wire [15:0]cu_target = ((bu_jmp) & (ROBhead === forwardC[21:16])) ? forwardC[31:16] : // forward from bu
+    wire [15:0]cu_target = ((bu_jmp) & (ROBhead === forwardC[21:16])) ? forwardC[15:0] : // forward from bu
                             (ROBcheck[ROBhead][12] === 1) ? ROB[ROBhead][31:16] :                       // commit instr #1
                             
-                            (bu_jmp & (((ROBhead + 1)%64) === forwardC[21:16])) ? forwardC[31:16] :
+                            (bu_jmp & (((ROBhead + 1)%64) === forwardC[21:16])) ? forwardC[15:0] :
                             (ROBcheck[(ROBhead + 1) % 64][12] === 1) ? ROB[(ROBhead + 1) % 64][31:16] : // commit instr #2
 
-                            (bu_jmp & (((ROBhead + 2)%64) === forwardC[21:16])) ? forwardC[31:16] :
+                            (bu_jmp & (((ROBhead + 2)%64) === forwardC[21:16])) ? forwardC[15:0] :
                             (ROBcheck[(ROBhead + 2) % 64][12] === 1) ? ROB[(ROBhead + 2) % 64][31:16] : // commit instr #3
                             
                              pc + 8;
 
-    wire [15:0]cu_wdata0 = ROBhead === forwardA[21:16] ? forwardA[31:16] :
-                            ROBhead === forwardB[21:16] ? forwardB[31:16] :
-                            ROBhead === forwardC[21:16] ? forwardC[31:16] :
-                            ROBhead === forwardD[21:16] ? forwardD[31:16] :
+    wire [15:0]cu_wdata0 = ROBhead === forwardA[21:16] ? forwardA[15:0] :
+                            ROBhead === forwardB[21:16] ? forwardB[15:0] :
+                            ROBhead === forwardC[21:16] ? forwardC[15:0] :
+                            ROBhead === forwardD[21:16] ? forwardD[15:0] :
                             ROB[(ROBhead)][31:16];
     // forward the val to be committed
-    wire [15:0]cu_wdata1 = (ROBhead+1) % 64 === forwardA[21:16] ? forwardA[31:16] :
-                            (ROBhead+1) % 64 === forwardB[21:16] ? forwardB[31:16] :
-                            (ROBhead+1) % 64 === forwardC[21:16] ? forwardC[31:16] :
-                            (ROBhead+1) % 64 === forwardD[21:16] ? forwardD[31:16] :
+    wire [15:0]cu_wdata1 = (ROBhead+1) % 64 === forwardA[21:16] ? forwardA[15:0] :
+                            (ROBhead+1) % 64 === forwardB[21:16] ? forwardB[15:0] :
+                            (ROBhead+1) % 64 === forwardC[21:16] ? forwardC[15:0] :
+                            (ROBhead+1) % 64 === forwardD[21:16] ? forwardD[15:0] :
                             ROB[(ROBhead+1) % 64][31:16];
 
-    wire [15:0]cu_wdata2 = (ROBhead+2) % 64 === forwardA[21:16] ? forwardA[31:16] :
-                            (ROBhead+2) % 64 === forwardB[21:16] ? forwardB[31:16] :
-                            (ROBhead+2) % 64 === forwardC[21:16] ? forwardC[31:16] :
-                            (ROBhead+2) % 64 === forwardD[21:16] ? forwardD[31:16] :
+    wire [15:0]cu_wdata2 = (ROBhead+2) % 64 === forwardA[21:16] ? forwardA[15:0] :
+                            (ROBhead+2) % 64 === forwardB[21:16] ? forwardB[15:0] :
+                            (ROBhead+2) % 64 === forwardC[21:16] ? forwardC[15:0] :
+                            (ROBhead+2) % 64 === forwardD[21:16] ? forwardD[15:0] :
                             ROB[(ROBhead+2) % 64][31:16];
 
     wire [5:0] cu_wrob0 = ROBhead;
