@@ -225,7 +225,7 @@ module main();
     wire [15:0] offset6B = {{11{instructB[5]}}, instructB[4:0]};
 
     wire useB0 = is_addrB | is_addiB | is_andrB | is_andiB | is_jmpB | is_jsrrB | is_ldrB | is_notB | is_trapB;
-    wire useB1 = is_addrB | is_andrB;
+    wire useB1 = is_addrB | is_andrB | is_strB;
     wire [1:0] useB = {useB0, useB1};
 
     wire writeToRegB = is_addrB | is_addiB | is_andrB | is_andiB | is_ldB | is_ldiB | is_ldrB | is_leaB | is_notB;
@@ -233,8 +233,9 @@ module main();
     wire is_storeB = is_stB | is_stiB | is_strB;
 
     wire is_aluB = (opcodeB == 4'b0001) | (opcodeB == 4'b1010) | (opcodeB == 4'b1001); // ?????????? where is this used
-    wire [2:0] regB0 = is_trapB ? 0: instructB[8:6];
-    wire [2:0] regB1 = instructB[2:0];
+    wire [2:0] regB0 = (is_storeB) ? writeRegB : 
+                        is_trapB ? 0: instructB[8:6];
+    wire [2:0] regB1 = is_strA ? instructB[8:6] : instructB[2:0];
 
 
     // TODO rename 
@@ -279,7 +280,7 @@ module main();
     wire [15:0] offset6C = {{11{instructC[5]}}, instructC[4:0]};
 
     wire useC0 = is_addrC | is_addiC | is_andrC | is_andiC | is_jmpC | is_jsrrC | is_ldrC | is_notC | is_trapC;
-    wire useC1 = is_addrC | is_andrC | is_brC;
+    wire useC1 = is_addrC | is_andrC | is_strC | is_brC;
     wire [1:0] useC = {useC0, useC1};
 
     wire writeToRegC = is_addrC | is_addiC | is_andrC | is_andiC | is_ldC | is_ldiC | is_ldrC | is_leaC | is_notC | is_trapC;
@@ -287,8 +288,8 @@ module main();
     wire is_storeC = is_stC | is_stiC | is_strC;
 
     wire is_aluC = (opcodeC == 4'b0001) | (opcodeC == 4'b1010) | (opcodeC == 4'b1001);
-    wire [2:0] regC0 = is_trapC ? 0 : instructC[8:6];
-    wire [2:0] regC1 = instructC[2:0];
+    wire [2:0] regC0 = is_storeC ? writeRegC : is_trapC ? 0 : instructC[8:6];
+    wire [2:0] regC1 = is_strC ? instructC[8:6] : instructC[2:0];
 
 
 
@@ -334,7 +335,7 @@ module main();
     wire [15:0] offset6D = {{11{instructD[5]}}, instructD[4:0]};
 
     wire useD0 = is_addrD | is_addiD | is_andrD | is_andiD | is_jmpD | is_jsrrD | is_ldrD | is_notD | is_trapD;
-    wire useD1 = is_addrD | is_andrD;
+    wire useD1 = is_addrD | is_andrD | is_strD;
     wire [1:0] useD = {useD0, useD1};
 
     wire writeToRegD = is_addrD | is_addiD | is_andrD | is_andiD | is_ldD | is_ldiD | is_ldrD | is_leaD | is_notD;
@@ -342,8 +343,8 @@ module main();
     wire is_storeD = is_stD | is_stiD | is_strD;
 
     wire is_aluD = (opcodeD == 4'b0001) | (opcodeD == 4'b1010) | (opcodeD == 4'b1001);
-    wire [2:0] regD0 = is_trapD ? 0 :instructD[8:6];
-    wire [2:0] regD1 = instructD[2:0];
+    wire [2:0] regD0 = is_storeD ? writeRegD : is_trapD ? 0 :instructD[8:6];
+    wire [2:0] regD1 = is_strD ? instructD[8:6] : instructD[2:0];
 
 
     assign raddr = {regA0, regA1, regB0, regB1, regC0, regC1, regD0, regD1};
@@ -1055,7 +1056,7 @@ module main();
     wire [15:0] lsu_in_loc0 = (load_opcode === 4'b0011 | load_opcode === 4'b1011) ? ROB[lsu_rob][15:0] : 
                                 (load_opcode === 4'b0111) ? lsu_out[17:2] :
                                 lsu_out[33:18];
-    wire [5:0] lsu_tste = lsu_out[51:46];
+    wire [15:0] lsu_tste = lsu_out[33:18];
     wire [5:0] lsu_offset6 = ROBcheck[lsu_out[51:46]][11:6];
     wire [15:0] lsu_in_loc1 = (load_opcode === 4'b0110 | load_opcode === 4'b0111) ? {{9{lsu_offset6[5]}}, lsu_offset6} : 
                                 lsu_out[17:2];
@@ -1101,13 +1102,13 @@ module main();
     wire [2:0] cu_waddr1 = ROBcheck[(ROBhead+1) % 64][2:0];
     wire [2:0] cu_waddr2 = ROBcheck[(ROBhead+2) % 64][2:0];
 
-    wire [15:0]cu_target = (ROBcheck[ROBhead][12] === 1 & ROBhead === forwardC[21:16]) ? forwardC[31:16] : // forward from bu
+    wire [15:0]cu_target = ((ROBcheck[ROBhead][12] === 1) & (ROBhead === forwardC[21:16])) ? forwardC[31:16] : // forward from bu
                             (ROBcheck[ROBhead][12] === 1) ? ROB[ROBhead][31:16] :                       // commit instr #1
                             
-                            (ROBcheck[(ROBhead + 1) % 64][12] === 1 & (ROBhead + 1)%64 === forwardC[21:16]) ? forwardC[31:16] :
+                            ((ROBcheck[(ROBhead + 1) % 64][12] === 1) & (((ROBhead + 1)%64) === forwardC[21:16])) ? forwardC[31:16] :
                             (ROBcheck[(ROBhead + 1) % 64][12] === 1) ? ROB[(ROBhead + 1) % 64][31:16] : // commit instr #2
 
-                            (ROBcheck[(ROBhead + 2) % 64][12] === 1 & (ROBhead + 2)%64 === forwardC[21:16]) ? forwardC[31:16] :
+                            ((ROBcheck[(ROBhead + 2) % 64][12]) === 1 & (((ROBhead + 2)%64) === forwardC[21:16])) ? forwardC[31:16] :
                             (ROBcheck[(ROBhead + 2) % 64][12] === 1) ? ROB[(ROBhead + 2) % 64][31:16] : // commit instr #3
                             
                              pc + 8;
