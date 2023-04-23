@@ -88,5 +88,10 @@ module store_buffer(
         end
     end
 
+    initial begin
+        for(i = 0; i < 8; i = i + 1) begin
+            store_buffer[i][33:32] <= 2'b00;
+        end
+    end
 
 endmodule

@@ -48,7 +48,7 @@ module load_store_unit(
     wire [15:0] search_data;
     wire search_valid;
 
-    assign mem_location = search_data;
+    assign mem_location = location;
 
     store_buffer store_buffer(
         .clk(clk),

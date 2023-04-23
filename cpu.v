@@ -164,6 +164,7 @@ module main();
 
     wire is_ldunitA = is_ldA | is_ldiA | is_ldrA | is_stA | is_stiA | is_strA;
     wire is_aluunitA = is_addrA | is_addiA | is_andrA | is_andiA | is_notA | is_leaA | is_trapA; // added is_trapA to alu
+    wire is_bunitA = is_brA | is_jmpA | is_jsrA | is_jsrrA;
 
     wire [15:0] imm5A = {{12{instructA[4]}}, instructA[3:0]};
     wire [15:0] pc_offset11A = {{5{instructA[10]}}, instructA[10:0]};
@@ -214,7 +215,8 @@ module main();
                                     is_ldrB, is_leaB, is_notB, is_retB, is_retiB, 
                                     is_stB, is_stiB, is_strB, is_trapB};
 
-
+    
+    wire is_bunitB = is_jsrB | is_jsrrA | is_jmpB | is_brB | is_retB;
     wire is_ldunitB = is_ldB | is_ldiB | is_ldrB | is_stB | is_stiB | is_strB;
     wire is_aluunitB = is_addrB | is_addiB | is_andrB | is_andiB | is_notB | is_leaB | is_trapB;
 
@@ -269,6 +271,8 @@ module main();
 
     wire is_ldunitC = is_ldC | is_ldiC | is_ldrC | is_stC | is_stiC | is_strC;
     wire is_aluunitC = is_addrC | is_addiC | is_andrC | is_andiC | is_notC | is_leaC | is_trapC;
+    wire is_bunitC = is_brC | is_jmpC | is_jsrC | is_jsrrC;
+
 
     wire [15:0] imm5C = {{12{instructC[4]}}, instructC[3:0]};
     wire [15:0] pc_offset11C = {{5{instructC[10]}}, instructC[10:0]};
@@ -322,6 +326,8 @@ module main();
 
     wire is_ldunitD = is_ldD | is_ldiD | is_ldrD | is_stD | is_stiD | is_strD;
     wire is_aluunitD = is_addrD | is_addiD | is_andrD | is_andiD | is_notD | is_leaD | is_trapD;
+    wire is_bunitD = is_brD | is_jmpD | is_jsrD | is_jsrrD;
+
 
     wire [15:0] imm5D = {{12{instructD[4]}}, instructD[3:0]};
     wire [15:0] pc_offset11D = {{5{instructD[10]}}, instructD[10:0]};
@@ -429,6 +435,7 @@ module main();
         d2_instructA <= d1_instructA;
         d2_is_ldunitA <= is_ldunitA;
         d2_is_aluunitA <= is_aluunitA;
+        d2_is_bunitA <= is_bunitA;
         d2_imm5A <= imm5A;
         d2_pc_offset11A <= pc_offset11A;
         d2_offset6A <= offset6A;
@@ -495,6 +502,7 @@ module main();
         d2_instructB <= d1_instructB;
         d2_is_ldunitB <= is_ldunitB;
         d2_is_aluunitB <= is_aluunitB;
+        d2_is_bunitB <= is_bunitB;
         d2_imm5B <= imm5B;
         d2_pc_offset11B <= pc_offset11B;
         d2_offset6B <= offset6B;
@@ -569,6 +577,8 @@ module main();
         d2_instructC <= d1_instructC;
         d2_is_ldunitC <= is_ldunitC;
         d2_is_aluunitC <= is_aluunitC;
+        d2_is_bunitC <= is_bunitC;
+
         d2_imm5C <= imm5C;
         d2_pc_offset11C <= pc_offset11C;
         d2_offset6C <= offset6C;
@@ -648,6 +658,7 @@ module main();
         d2_instructD <= d1_instructD;
         d2_is_ldunitD <= is_ldunitD;
         d2_is_aluunitD <= is_aluunitD;
+        d2_is_bunitD <= is_bunitD;
         d2_imm5D <= imm5D;
         d2_pc_offset11D <= pc_offset11D;
         d2_offset6D <= offset6D;
