@@ -847,10 +847,10 @@ module main();
         .flush(),
         .taken(bu_buq_used),
         .forwardA(forwardA), .forwardB(forwardB), .forwardC(forwardC), .forwardD(forwardD),
-        .inOperation0(), .inROB0(), .inLook0A(), .inLook0B(), .inUse0(), .inReady0(),
-        .inOperation1(), .inROB1(), .inLook1A(), .inLook1B(), .inUse1(), .inReady1(),
-        .inOperation2(), .inROB2(), .inLook2A(), .inLook2B(), .inUse2(), .inReady2(),
-        .inOperation3(), .inROB3(), .inLook3A(), .inLook3B(), .inUse3(), .inReady3(),
+        .inOperation0(bu_feederA[56:53]), .inROB0(bu_feederA[52:47]), .inLook0A(bu_feederA[46:41]), .inLook0B(bu_feederA[40:35]), .inValue0A(bu_feederA[34:19]), .inValue0B(bu_feederA[18:3]), .inUse0(bu_feederA[2:1]), .inReady0(bu_feederA[0] & bu_feedervalidA),
+        .inOperation1(bu_feederB[56:53]), .inROB1(bu_feederB[52:47]), .inLook1A(bu_feederB[46:41]), .inLook1B(bu_feederB[40:35]), .inValue1A(bu_feederB[34:19]), .inValue1B(bu_feederA[18:3]), .inUse1(bu_feederB[2:1]), .inReady1(bu_feederB[0] & bu_feedervalidB),
+        .inOperation2(bu_feederC[56:53]), .inROB2(bu_feederC[52:47]), .inLook2A(bu_feederC[46:41]), .inLook2B(bu_feederC[40:35]), .inValue2A(bu_feederC[34:19]), .inValue2B(bu_feederA[18:3]), .inUse2(bu_feederC[2:1]), .inReady2(bu_feederC[0] & bu_feedervalidC),
+        .inOperation3(bu_feederD[56:53]), .inROB3(bu_feederD[52:47]), .inLook3A(bu_feederD[46:41]), .inLook3B(bu_feederD[40:35]), .inValue3A(bu_feederD[34:19]), .inValue3B(bu_feederA[18:3]), .inUse3(bu_feederD[2:1]), .inReady3(bu_feederD[0] & bu_feedervalidD),
         .outOperation0(buq_out),
         .outOperation1()
     );

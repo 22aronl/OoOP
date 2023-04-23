@@ -14,7 +14,7 @@ module load_store_unit(
     assign out_valid = load_store[head][6];
 
     //Timing of Load_WAIt might be wrong
-    parameter LOAD_WAIT = 3;
+    parameter LOAD_WAIT = 2;
     parameter LOAD_SIZE = 8;
     wire store_buffer_stall;
     
@@ -61,6 +61,11 @@ module load_store_unit(
         .store_stall(store_buffer_stall)
     );
 
-
+    initial begin
+        for(i = 0; i < LOAD_SIZE; i = i + 1) begin
+            load_store[i][6] <= 1'b0;
+            load_store_data[i][16] <= 1'b0;
+        end
+    end
 
 endmodule
