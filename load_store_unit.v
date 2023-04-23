@@ -24,6 +24,7 @@ module load_store_unit(
     reg [3:0] head = 4'b0000;
     reg [3:0] tail = LOAD_WAIT;
     integer i;
+
     always @(posedge clk) begin
         if(flush) begin
             head <= 4'b0000;
@@ -46,6 +47,8 @@ module load_store_unit(
 
     wire [15:0] search_data;
     wire search_valid;
+
+    assign mem_location = search_data;
 
     store_buffer store_buffer(
         .clk(clk),

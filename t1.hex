@@ -1,7 +1,9 @@
 @0
-102e
-102e
-102e
-102e
+102f
+102f
+102f
+102f
 1025
 f021
+f025    // halt
+f021    // do not print this

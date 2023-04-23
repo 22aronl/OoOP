@@ -1,22 +1,12 @@
 @0
-1262
-1262
-1262
-1262
-1262
-ffff
-0001
-0002
-0003
-0004
-0005
-0006
-0007
-0008
-0009
-000a
-000b
-000c
-000d
-000e
-0010
+102F
+102F
+102F
+102F
+1025 // put A into r0
+4802 // jsr to print (uses incremented pc)
+102F // skip these two
+102F
+F021 // print
+F025 // halt
+F021 // do not print this

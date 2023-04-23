@@ -377,7 +377,7 @@ module main();
     //TODO: Timing issues with tailA and useA
 
     reg [19:0] d2_instructA;
-    reg d2_is_ldunitA;
+    reg d2_is_ldunitA = 1'b0;
     reg d2_is_aluunitA = 1'b0;
     reg d2_is_bunitA;
     reg d2_is_brA;
@@ -1044,7 +1044,7 @@ module main();
     wire [15:0] lsu_in_loc1 = (load_opcode === 4'b0110 | load_opcode === 4'b0111) ? {{9{lsu_offset6[5]}}, lsu_offset6} : 
                                 lsu_out[17:2];
 
-    wire [15:0] lsu_in_loc = lsu_in_loc + lsu_in_loc1;
+    wire [15:0] lsu_in_loc = lsu_in_loc0 + lsu_in_loc1;
 
     //TODO: STORE ISSUE
     //TODO: Load location line up issues
