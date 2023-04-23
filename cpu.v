@@ -119,10 +119,10 @@ module main();
 
 
     //decode 1
-    reg d1_pcA;
-    reg d1_pcB;
-    reg d1_pcC;
-    reg d1_pcD;
+    reg [15:0]d1_pcA;
+    reg [15:0]d1_pcB;
+    reg [15:0]d1_pcC;
+    reg [15:0]d1_pcD;
 
     //TODO: Deal with Condition Codes pls
 

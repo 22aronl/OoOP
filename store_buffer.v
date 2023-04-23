@@ -35,7 +35,7 @@ module store_buffer(
                             (store_buffer[0][32] == 1'b1 && store_buffer[0][31:16] == search_location) ? store_buffer[0][15:0] :
                             rcommit_valid == 1'b1 && rcommit_location == search_location ? rcommit_data : 16'b0000000000000000;
     
-    assign search_valid = (store_buffer[7][32] == 1'b1 && store_buffer[7][31:16] == search_location) |
+    assign search_valid = ((store_buffer[7][32] == 1'b1 && store_buffer[7][31:16] == search_location) |
                             (store_buffer[6][32] == 1'b1 && store_buffer[6][31:16] == search_location) |
                             (store_buffer[5][32] == 1'b1 && store_buffer[5][31:16] == search_location) |
                             (store_buffer[4][32] == 1'b1 && store_buffer[4][31:16] == search_location) |
@@ -43,7 +43,7 @@ module store_buffer(
                             (store_buffer[2][32] == 1'b1 && store_buffer[2][31:16] == search_location) |
                             (store_buffer[1][32] == 1'b1 && store_buffer[1][31:16] == search_location) |
                             (store_buffer[0][32] == 1'b1 && store_buffer[0][31:16] == search_location) |
-                            (rcommit_valid == 1'b1 && rcommit_location == search_location);
+                            (rcommit_valid == 1'b1 && rcommit_location == search_location));
 
     integer i;
     always @(posedge clk) begin

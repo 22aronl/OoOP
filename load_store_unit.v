@@ -39,8 +39,7 @@ module load_store_unit(
             head <= (head + 1) % LOAD_SIZE;
 
             if(search_valid) begin
-                load_store[(tail + LOAD_SIZE - 1) % LOAD_SIZE][6] <= 1'b0;
-                load_store_data[(tail + LOAD_SIZE - 1) % LOAD_SIZE] <= {search_valid, search_data};
+                load_store_data[(tail) % LOAD_SIZE] <= {search_valid, search_data};
             end
         end
     end
