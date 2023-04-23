@@ -385,7 +385,7 @@ module main();
     reg [19:0] d2_instructA;
     reg d2_is_ldunitA = 1'b0;
     reg d2_is_aluunitA = 1'b0;
-    reg d2_is_bunitA;
+    reg d2_is_bunitA = 1'b0;
     reg d2_is_brA;
     reg [15:0] d2_imm5A;
     reg [15:0] d2_pc_offset11A;
@@ -837,10 +837,30 @@ module main();
     // BU QUEUE //
     //////////////
 
+    wire [56:0] bu_feederA;
+    wire [56:0] bu_feederB;
+    wire [56:0] bu_feederC;
+    wire [56:0] bu_feederD;
+    wire bu_feedervalidA;
+    wire bu_feedervalidB;
+    wire bu_feedervalidC;
+    wire bu_feedervalidD;
+    queue_feeder bu_feeder(
+        .inOperationA(d2_outputA), .validA(d2_is_bunitA),
+        .inOperationB(d2_outputB), .validB(d2_is_bunitB),
+        .inOperationC(d2_outputC), .validC(d2_is_bunitC),
+        .inOperationD(d2_outputD), .validD(d2_is_bunitD),
+        .outOperationA(bu_feederA), .outValidA(bu_feedervalidA),
+        .outOperationB(bu_feederB), .outValidB(bu_feedervalidB),
+        .outOperationC(bu_feederC), .outValidC(bu_feedervalidC),
+        .outOperationD(bu_feederD), .outValidD(bu_feedervalidD)
+    );
+
     // TODO: get condition flags from result of pc - 2
-    wire [1:0] bu_buq_used = {1'b0, buq_used & (buq_out[56] === 1'b1)};
+    wire [1:0] bu_buq_used = {buq_used & bu_queue_valid, 1'b1};
     wire buq_used;
     wire [56:0] buq_out;
+    wire bu_queue_valid = buq_out[56] === 1'b1;
 
     queue bu_queue(
         .clk(clk),
@@ -930,25 +950,6 @@ module main();
 
     end
 
-
-    wire [56:0] bu_feederA;
-    wire [56:0] bu_feederB;
-    wire [56:0] bu_feederC;
-    wire [56:0] bu_feederD;
-    wire bu_feedervalidA;
-    wire bu_feedervalidB;
-    wire bu_feedervalidC;
-    wire bu_feedervalidD;
-    queue_feeder bu_feeder(
-        .inOperationA(d2_outputA), .validA(d2_is_bunitA),
-        .inOperationB(d2_outputB), .validB(d2_is_bunitB),
-        .inOperationC(d2_outputC), .validC(d2_is_bunitC),
-        .inOperationD(d2_outputD), .validD(d2_is_bunitD),
-        .outOperationA(bu_feederA), .outValidA(bu_feedervalidA),
-        .outOperationB(bu_feederB), .outValidB(bu_feedervalidB),
-        .outOperationC(bu_feederC), .outValidC(bu_feedervalidC),
-        .outOperationD(bu_feederD), .outValidD(bu_feedervalidD)
-    );
 
     // Branch Unit: uses forwardC
     reg bu_valid;
@@ -1045,13 +1046,14 @@ module main();
     assign lsu_used = lsu_out[2:1] === 2'b00;
     wire load_flush = 1'b0;
     wire [1:0] store_buffer_commit = 2'b00;
-    wire [5:0] load_opcode = lsu_out[55:52];
+    wire [4:0] load_opcode = lsu_out[55:52];
     wire load_is_ld = (lsu_out[55:52]===4'b0010) | (lsu_out[56:52]===4'b1010) | (lsu_out[56:52]===4'b0110);
 
     wire [15:0] lsu_in_loc0 = (load_opcode === 4'b0011 | load_opcode === 4'b1011) ? ROB[lsu_rob][15:0] : 
                                 (load_opcode === 4'b0111) ? lsu_out[17:2] :
                                 lsu_out[33:18];
-    wire [5:0] lsu_offset6 = ROBcheck[lsu_rob][11:6];
+    wire [5:0] lsu_tste = lsu_out[51:46];
+    wire [5:0] lsu_offset6 = ROBcheck[lsu_out[51:46]][11:6];
     wire [15:0] lsu_in_loc1 = (load_opcode === 4'b0110 | load_opcode === 4'b0111) ? {{9{lsu_offset6[5]}}, lsu_offset6} : 
                                 lsu_out[17:2];
 
