@@ -663,7 +663,7 @@ module main();
                                 d2_rdataD0[6] ? ROB[d2_rdataD0[5:0]] : 
                                 d2_rdataD0[22:7];
     wire [15:0] d2_valueD1 = (d2_instructD[12] | d2_instructD[14] | d2_instructD[0]) ? d2_pc_offset11D : 
-                                ( d2_instructD[10] | d2_instructD[9] | d2_instructD[7] | d2_instructD[3] | d2_instructD[2]) ? d2_pc_offset9D :
+                                (d2_instructD[10] | d2_instructD[9] | d2_instructD[7] | d2_instructD[3] | d2_instructD[2]) ? d2_pc_offset9D :
                                 d2_instructD[11] ? {16{1'b0}} : // jsrr
                                 (d2_instructD[17] | d2_instructD[15]) ? d2_imm5D :
                                 (d2_instructD[8]) ? d2_offset6D :
@@ -720,11 +720,11 @@ module main();
 
         //TODO Update
         ROB[d1_tailB][15:0] <= pcB;
-        ROB[d1_tailB][32] <= flush;
+        ROB[d1_tailB][32] <= 1'b0;
         ROB[d1_tailC][15:0] <= pcC;
-        ROB[d1_tailC][32] <= flush;
+        ROB[d1_tailC][32] <= 1'b0;
         ROB[d1_tailD][15:0] <= pcD;
-        ROB[d1_tailD][32] <= flush;
+        ROB[d1_tailD][32] <= 1'b0;
         if(is_validA)
             ROBtail <= (ROBtail + 4) % 64;
 
@@ -739,27 +739,27 @@ module main();
         if(forwardA[22] == 1'b1) begin
             ROB[forwardA[21:16]][31:16] <= forwardA[15:0];
             ROB_condition_codes[forwardA[21:16]] <= condition_code_A;
-            ROB[forwardA[21:16]][32] <= 1'b1;
+            ROB[forwardA[21:16]][32] <= !flush ? 1'b1 : 1'b0;
             ROBcheck[forwardA[21:16]][13] <= alu_value0B == 8'b00100101 ? 1'b0 : 1'b1;
         end
 
         if(forwardB[22] == 1'b1) begin
             ROB[forwardB[21:16]][31:16] <= forwardB[15:0];
             ROB_condition_codes[forwardB[21:16]] <= condition_code_B;
-            ROB[forwardB[21:16]][32] <= 1'b1;
+            ROB[forwardB[21:16]][32] <= !flush ? 1'b1 : 1'b0;
             ROBcheck[forwardB[21:16]][13] <= alu_value1B == 8'b00100101 ? 1'b0 : 1'b1;
         end
 
         if(forwardC[22] == 1'b1) begin
             ROB[forwardC[21:16]][31:16] <= forwardC[15:0];
-            ROB[forwardC[21:16]][32] <= 1'b1;
+            ROB[forwardC[21:16]][32] <= !flush ? 1'b1 : 1'b0;
             ROBcheck[forwardC[21:16]][12] <= bu_jmp;
         end
 
         if(forwardD[22] == 1'b1) begin
             ROB[forwardD[21:16]][31:16] <= forwardD[15:0];
             ROB_condition_codes[forwardD[21:16]] <= condition_code_D;
-            ROB[forwardD[21:16]][32] <= 1'b1;
+            ROB[forwardD[21:16]][32] <= !flush ? 1'b1 : 1'b0;
             // add the thing for trap
         end
     end
