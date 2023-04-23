@@ -1,20 +1,20 @@
 [*]
 [*] GTKWave Analyzer v3.3.108 (w)1999-2020 BSI
-[*] Sun Apr 23 03:30:09 2023
+[*] Sun Apr 23 03:35:51 2023
 [*]
 [dumpfile] "C:\Users\Aaron Lo\Documents\cs429h\OOOP\t4.vcd"
-[dumpfile_mtime] "Sun Apr 23 03:29:33 2023"
-[dumpfile_size] 83864
+[dumpfile_mtime] "Sun Apr 23 03:34:45 2023"
+[dumpfile_size] 84601
 [savefile] "C:\Users\Aaron Lo\Documents\cs429h\OOOP\waveform.gtkw"
 [timestart] 0
-[size] 1266 677
+[size] 1416 715
 [pos] -1 -1
-*-11.713507 4970 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-11.713507 8310 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] main.
 [sst_width] 254
 [signals_width] 198
 [sst_expanded] 1
-[sst_vpaned_height] 416
+[sst_vpaned_height] 446
 @28
 main.clk
 @22
@@ -28,7 +28,7 @@ main.pcC[15:0]
 main.pcD[15:0]
 @1401200
 -fetch
-@c00200
+@800200
 -decode
 @22
 main.instructA[15:0]
@@ -62,16 +62,17 @@ main.regB1[2:0]
 @22
 main.instructC[15:0]
 main.opcodeC[3:0]
-@c00200
+@800201
 -decodeC
-@22
+@23
 main.d1_tailC[5:0]
-@28
+main.offset6C[15:0]
+@29
 main.writeToRegC
 main.writeRegC[2:0]
 main.regC0[2:0]
 main.regC1[2:0]
-@1401200
+@1000201
 -decodeC
 @22
 main.instructD[15:0]
@@ -88,6 +89,7 @@ main.regD1[2:0]
 main.useD[1:0]
 @1401200
 -decodeD
+@1000200
 -decode
 @c00200
 -decode 2

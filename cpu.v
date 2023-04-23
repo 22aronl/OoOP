@@ -857,7 +857,7 @@ module main();
     );
 
     // TODO: get condition flags from result of pc - 2
-    wire [1:0] bu_buq_used = {buq_used & bu_queue_valid, 1'b1};
+    wire [1:0] bu_buq_used = {1'b0, buq_used & bu_queue_valid}; //?? why would you put 1'b1 here
     wire buq_used;
     wire [56:0] buq_out;
     wire bu_queue_valid = buq_out[56] === 1'b1;
