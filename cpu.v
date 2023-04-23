@@ -426,7 +426,8 @@ module main();
                                 d2_instructA[13] ? {16{1'b0}} : // ret
                                 d2_rdataA0[6] ? ROB[d2_rdataA0[5:0]] : 
                                 d2_rdataA0[22:7];
-    wire [15:0] d2_valueA1 = (d2_instructA[12] | d2_instructA[14] | d2_instructA[10] | d2_instructA[9] | d2_instructA[7] | d2_instructB[3] | d2_instructB[2] | d2_instructA[0]) ? d2_pc_offset11A : 
+    wire [15:0] d2_valueA1 = (d2_instructA[14] | d2_instructA[12] | d2_instructA[0]) ? d2_pc_offset11A : 
+                                (d2_instructA[10] | d2_instructA[9] | d2_instructA[7] | d2_instructB[3] | d2_instructB[2]) ? d2_pc_offset9A :
                                 d2_instructA[11] ? {16{1'b0}} : // jsrr
                                 (d2_instructA[17] | d2_instructA[15]) ? d2_imm5A :
                                 (d2_instructA[8]) ? d2_offset6A :
@@ -484,6 +485,8 @@ module main();
     reg d2_is_bunitB = 1'b0;
     reg [5:0] d2_tailB; //ROB
 
+    wire [15:0] d2_pc_offset9B = {{7{d2_pc_offset11B[9]}}, d2_pc_offset11B[8:0]};
+
     //TODO: update rdara indexs
     wire [22:0] d2_rdataB0 = rdata[137:115];
     wire [22:0] d2_rdataB1 = rdata[114:92];
@@ -497,7 +500,8 @@ module main();
                                 d2_instructB[13] ? {16{1'b0}} : // ret
                                 d2_rdataB0[6] ? ROB[d2_rdataB0[5:0]] : 
                                 d2_rdataB0[22:7];
-    wire [15:0] d2_valueB1 = (d2_instructB[12] | d2_instructB[14] | d2_instructB[10] | d2_instructB[9] | d2_instructB[7] | d2_instructB[3] | d2_instructB[2] | d2_instructB[0]) ? d2_pc_offset11B : 
+    wire [15:0] d2_valueB1 = (d2_instructB[12] | d2_instructB[14] | d2_instructB[0]) ? d2_pc_offset11B : 
+                                ( d2_instructB[10] | d2_instructB[9] | d2_instructB[7] | d2_instructB[3] | d2_instructB[2]) ? d2_pc_offset9B :
                                 d2_instructB[11] ? {16{1'b0}} : // jsrr
                                 (d2_instructB[17] | d2_instructB[15]) ? d2_imm5B :
                                 (d2_instructB[8]) ? d2_offset6B :
@@ -548,6 +552,8 @@ module main();
     wire [22:0] d2_rdataC0 = rdata[91:69];
     wire [22:0] d2_rdataC1 = rdata[68:46];
 
+    wire [15:0] d2_pc_offset9C = {{7{d2_pc_offset11C[9]}}, d2_pc_offset11C[8:0]};
+
     reg d2_is_aluunitC = 1'b0;
     reg d2_is_ldunitC = 1'b0;
     reg d2_is_bunitC = 1'b0;
@@ -571,7 +577,8 @@ module main();
                                 d2_instructC[13] ? {16{1'b0}} : // ret
                                 d2_rdataC0[6] ? ROB[d2_rdataC0[5:0]] : 
                                 d2_rdataC0[22:7];
-    wire [15:0] d2_valueC1 = (d2_instructC[12] | d2_instructC[14] | d2_instructC[10] | d2_instructC[9] | d2_instructC[7] | d2_instructC[3] | d2_instructC[2] | d2_instructC[0]) ? d2_pc_offset11C : 
+    wire [15:0] d2_valueC1 = (d2_instructC[12] | d2_instructC[14] | d2_instructC[0]) ? d2_pc_offset11C : 
+                                (d2_instructC[10] | d2_instructC[9] | d2_instructC[7] | d2_instructC[3] | d2_instructC[2]) ? d2_pc_offset9C : 
                                 d2_instructC[11] ? {16{1'b0}} : // jsrr
                                 (d2_instructC[17] | d2_instructC[15]) ? d2_imm5C :
                                 (d2_instructC[8]) ? d2_offset6C :
@@ -627,6 +634,8 @@ module main();
     wire [22:0] d2_rdataD0 = rdata[45:23];
     wire [22:0] d2_rdataD1 = rdata[22:0];
 
+    wire [15:0] d2_pc_offset9D = {{7{d2_pc_offset11D[9]}}, d2_pc_offset11D[8:0]};
+
     reg d2_is_brD;
 
     reg d2_is_aluunitD = 1'b0;
@@ -653,7 +662,8 @@ module main();
                                 d2_instructD[13] ? {16{1'b0}} : // ret
                                 d2_rdataD0[6] ? ROB[d2_rdataD0[5:0]] : 
                                 d2_rdataD0[22:7];
-    wire [15:0] d2_valueD1 = (d2_instructD[12] | d2_instructD[14] | d2_instructD[10] | d2_instructD[9] | d2_instructD[7] | d2_instructD[3] | d2_instructD[2] | d2_instructD[0]) ? d2_pc_offset11D : 
+    wire [15:0] d2_valueD1 = (d2_instructD[12] | d2_instructD[14] | d2_instructD[0]) ? d2_pc_offset11D : 
+                                ( d2_instructD[10] | d2_instructD[9] | d2_instructD[7] | d2_instructD[3] | d2_instructD[2]) ? d2_pc_offset9D :
                                 d2_instructD[11] ? {16{1'b0}} : // jsrr
                                 (d2_instructD[17] | d2_instructD[15]) ? d2_imm5D :
                                 (d2_instructD[8]) ? d2_offset6D :
@@ -710,11 +720,11 @@ module main();
 
         //TODO Update
         ROB[d1_tailB][15:0] <= pcB;
-        ROB[d1_tailB][32] <= 1'b0;
+        ROB[d1_tailB][32] <= flush;
         ROB[d1_tailC][15:0] <= pcC;
-        ROB[d1_tailC][32] <= 1'b0;
+        ROB[d1_tailC][32] <= flush;
         ROB[d1_tailD][15:0] <= pcD;
-        ROB[d1_tailD][32] <= 1'b0;
+        ROB[d1_tailD][32] <= flush;
         if(is_validA)
             ROBtail <= (ROBtail + 4) % 64;
 
@@ -1095,16 +1105,13 @@ module main();
     always @(posedge clk) begin
         if(pc > 500)
             halt <= 1;
-        pc <= pc + 8;
-        //pc <= cu_target;
+        pc <= cu_target;
         //pc <= target;
     end
 
     wire [5:0] headOfROB = ROBcheck[ROBhead];
     wire [32:0] ROBa = ROB[ROBhead];
-    wire flush = cu_flush;
-
-    reg cu_flush = 1'b0;
+    wire flush = (cu_target !== pc + 8);
 
     wire cu_wen0 = ROB[ROBhead][32] && ROBcheck[ROBhead][3]; // if [4] then should be mem write enabled
     wire cu_wen1 = ROB[ROBhead][32] && (ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][12];
