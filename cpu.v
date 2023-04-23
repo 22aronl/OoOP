@@ -1105,10 +1105,10 @@ module main();
     wire [15:0]cu_target = ((bu_jmp) & (ROBhead === forwardC[21:16])) ? forwardC[31:16] : // forward from bu
                             (ROBcheck[ROBhead][12] === 1) ? ROB[ROBhead][31:16] :                       // commit instr #1
                             
-                            ((bu_jmp & (((ROBhead + 1)%64) === forwardC[21:16])) ? forwardC[31:16] :
+                            (bu_jmp & (((ROBhead + 1)%64) === forwardC[21:16])) ? forwardC[31:16] :
                             (ROBcheck[(ROBhead + 1) % 64][12] === 1) ? ROB[(ROBhead + 1) % 64][31:16] : // commit instr #2
 
-                            ((bu_jmp & (((ROBhead + 2)%64) === forwardC[21:16])) ? forwardC[31:16] :
+                            (bu_jmp & (((ROBhead + 2)%64) === forwardC[21:16])) ? forwardC[31:16] :
                             (ROBcheck[(ROBhead + 2) % 64][12] === 1) ? ROB[(ROBhead + 2) % 64][31:16] : // commit instr #3
                             
                              pc + 8;
