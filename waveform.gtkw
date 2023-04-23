@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.108 (w)1999-2020 BSI
-[*] Sun Apr 23 05:42:42 2023
+[*] Sun Apr 23 05:49:31 2023
 [*]
-[dumpfile] "C:\Users\Aaron Lo\Documents\cs429h\OOOP\t4.vcd"
-[dumpfile_mtime] "Sun Apr 23 05:39:17 2023"
-[dumpfile_size] 115739
+[dumpfile] "C:\Users\Aaron Lo\Documents\cs429h\OOOP\t2.vcd"
+[dumpfile_mtime] "Sun Apr 23 05:49:17 2023"
+[dumpfile_size] 124523
 [savefile] "C:\Users\Aaron Lo\Documents\cs429h\OOOP\waveform.gtkw"
 [timestart] 0
 [size] 1576 759
 [pos] -1 -1
-*-11.713507 3140 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-11.713507 4650 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] main.
 [treeopen] main.lsu.
 [sst_width] 254
@@ -34,9 +34,7 @@ main.pcD[15:0]
 @22
 main.instructA[15:0]
 main.opcodeA[3:0]
-@28
-main.is_bunitA
-@c00200
+@800200
 -decodeA
 @22
 main.d1_tailA[5:0]
@@ -46,13 +44,11 @@ main.writeRegA[2:0]
 main.regA0[2:0]
 main.regA1[2:0]
 main.is_ldA
-@1401200
+@1000200
 -decodeA
 @22
 main.instructB[15:0]
 main.opcodeB[3:0]
-@28
-main.is_bunitB
 @c00200
 -decodeB
 @22
@@ -66,18 +62,8 @@ main.regB1[2:0]
 -decodeB
 @22
 main.instructC[15:0]
-@c00022
 main.opcodeC[3:0]
-@28
-(0)main.opcodeC[3:0]
-(1)main.opcodeC[3:0]
-(2)main.opcodeC[3:0]
-(3)main.opcodeC[3:0]
-@1401200
--group_end
-@28
-main.is_bunitC
-@c00200
+@800200
 -decodeC
 @22
 main.d1_tailC[5:0]
@@ -87,13 +73,11 @@ main.writeToRegC
 main.writeRegC[2:0]
 main.regC0[2:0]
 main.regC1[2:0]
-@1401200
+@1000200
 -decodeC
 @22
 main.instructD[15:0]
 main.opcodeD[3:0]
-@28
-main.is_bunitD
 @c00200
 -decodeD
 @22
@@ -107,10 +91,11 @@ main.useD[1:0]
 @1401200
 -decodeD
 -decode
-@800200
+@c00200
 -decode 2
 @22
 main.d2_opcodeA[3:0]
+main.d1_pcA[15:0]
 @c00200
 -decode2_A
 @22
@@ -162,7 +147,7 @@ main.d2_useA[1:0]
 main.robLookA0
 @1401200
 -decode2_A
-@c00200
+@800200
 -decode2_B
 @22
 main.d2_tailB[5:0]
@@ -191,9 +176,12 @@ main.regB0[2:0]
 -group_end
 @28
 main.d2_useB[1:0]
-@1401200
+@22
+main.d2_valueB0[15:0]
+main.d2_valueB1[15:0]
+@1000200
 -decode2_B
-@800200
+@c00200
 -decode2_C
 @22
 main.d2_tailC[5:0]
@@ -201,13 +189,12 @@ main.d2_tailC[5:0]
 main.d2_lookC0_
 @22
 main.d2_lookC0[5:0]
-main.d2_lookC1[5:0]
 @28
 main.d2_writeRegC[2:0]
 main.d2_writeToRegC
 main.d2_useC_[1:0]
 main.d2_useC[1:0]
-@1000200
+@1401200
 -decode2_C
 @c00200
 -decode2_D
@@ -289,7 +276,6 @@ main.d2_valueD1[15:0]
 main.d2_useD[1:0]
 @1401200
 -decode2_D
-@1000200
 -decode 2
 @c00200
 -decodeA
@@ -536,7 +522,7 @@ main.alu_queue_used[1:0]
 @1401200
 -alu_queue_part
 -alu_queue
-@c00200
+@c00201
 -alu_unit_0
 @c00022
 main.alu_opcode0[3:0]
@@ -560,7 +546,7 @@ main.alu_unknown0
 main.condition_code_A[2:0]
 @22
 main.forwardA[22:0]
-@1401200
+@1401201
 -alu_unit_0
 @c00200
 -alu_rs_0
@@ -743,8 +729,6 @@ main.forwardB[22:0]
 main.forwardBROB[5:0]
 main.forwardBValue[15:0]
 main.forwardC[22:0]
-main.forwardCROB[5:0]
-main.forwardCValue[15:0]
 main.forwardD[22:0]
 @1000200
 -forward
@@ -877,16 +861,8 @@ main.lsu_out[56:0]
 main.lsu_used
 @1401200
 -ld_queue
-@c00201
--lsu
 @c00200
--lsu_out
-@22
-main.lsu_in_loc0[15:0]
-main.lsu_in_loc1[15:0]
-main.lsu_tste[15:0]
-@1401200
--lsu_out
+-lsu
 @22
 main.lsu_in_loc[15:0]
 @28
@@ -899,27 +875,7 @@ main.lsu_used
 main.load_stall
 @22
 main.lsu.data[15:0]
-@c00022
 main.lsu.location[15:0]
-@28
-(0)main.lsu.location[15:0]
-(1)main.lsu.location[15:0]
-(2)main.lsu.location[15:0]
-(3)main.lsu.location[15:0]
-(4)main.lsu.location[15:0]
-(5)main.lsu.location[15:0]
-(6)main.lsu.location[15:0]
-(7)main.lsu.location[15:0]
-(8)main.lsu.location[15:0]
-(9)main.lsu.location[15:0]
-(10)main.lsu.location[15:0]
-(11)main.lsu.location[15:0]
-(12)main.lsu.location[15:0]
-(13)main.lsu.location[15:0]
-(14)main.lsu.location[15:0]
-(15)main.lsu.location[15:0]
-@1401200
--group_end
 @c00022
 main.lsu.mem_location[15:0]
 @28
@@ -943,17 +899,13 @@ main.lsu.mem_location[15:0]
 -group_end
 @28
 main.lsu.mem_valid
-@22
-main.lsu.search_data[15:0]
-main.lsu.tail[3:0]
-@28
 main.lsu.search_valid
 @22
 main.lsu.mem_data[15:0]
 main.lsu.out_data[15:0]
 @28
 main.lsu.out_valid
-@c00200
+@800200
 -store_buffer
 @28
 main.lsu.store_buffer.search_valid
@@ -961,9 +913,9 @@ main.lsu.store_buffer.input_valid
 @22
 main.lsu.store_buffer.search_location[15:0]
 main.lsu.store_buffer.search_data[15:0]
-@1401200
+@1000200
 -store_buffer
-@1401201
+@1401200
 -lsu
 [pattern_trace] 1
 [pattern_trace] 0

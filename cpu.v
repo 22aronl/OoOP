@@ -413,6 +413,8 @@ module main();
     wire [22:0] d2_rdataA0 = rdata[183:161];
     wire [22:0] d2_rdataA1 = rdata[160:138];
 
+    wire [15:0] d2_pc_offset9A = {{7{d2_pc_offset11A[9]}}, d2_pc_offset11A[8:0]};
+
     // [19] is_valid, [18]addr, [17] addi, [16] andr, [15] andi, [14] br, [13] jmp, [12] jsr, [11] jsrr, [10] ld, 
     // [9] ldi, [8] ldr, [7] lea, [6] not, [5] ret, [4] reti, [3] st, [2] sti, [1] str, [0] trap
     
@@ -983,10 +985,10 @@ module main();
     wire [15:0]target = bu_is_jmp ? bu_pcval :
                         bu_is_jsr ?
                             (bu_rflag === 0) ? bu_pcval :
-                            (bu_pcval + 2) + {{5{bu_pcoffset11[10]}}, {bu_pcoffset11[10:0]}} :
+                            (bu_pcval + 2) + {{4{bu_pcoffset11[10]}}, {bu_pcoffset11[10:0]}, {1'b0}} :
                         bu_is_br ? (bu_pcval + 2) + {{5{bu_pcoffset11[10]}}, {bu_pcoffset11[10:0]}}: //I changed this, might not be correct
                         bu_pcval + 2;
-                            
+                        
     wire [15:0]bu_r7 = bu_pcval + 2;
 
     // wire bu_br_cond = (is_br && ((bu_n && bu_nzp[2]) || (bu_z && bu_nzp[1]) || (bu_p && bu_nzp[0])));
@@ -1086,6 +1088,7 @@ module main();
         .load_stall(load_stall)
     );
 
+    wire forwardDValid = lsu_out_valid;
     assign forwardD = {lsu_out_valid, lsu_rob, lsu_data};
     wire [2:0] condition_code_D = {1'b1, lsu_data[15], lsu_data == 0, ~lsu_data[15], lsu_rob};
 
@@ -1112,13 +1115,13 @@ module main();
     wire [2:0] cu_waddr2 = ROBcheck[(ROBhead+2) % 64][2:0];
 
     wire [15:0]cu_target = ((bu_jmp) & (ROBhead === forwardC[21:16])) ? forwardC[15:0] : // forward from bu
-                            (ROBcheck[ROBhead][12] === 1) ? ROB[ROBhead][31:16] :                       // commit instr #1
+                            ((ROB[ROBhead][32] === 1'b1) && (ROBcheck[ROBhead][12] === 1)) ? ROB[ROBhead][31:16] :                       // commit instr #1
                             
                             (bu_jmp & (((ROBhead + 1)%64) === forwardC[21:16])) ? forwardC[15:0] :
-                            (ROBcheck[(ROBhead + 1) % 64][12] === 1) ? ROB[(ROBhead + 1) % 64][31:16] : // commit instr #2
+                            ((ROB[(ROBhead+1)%64][32] === 1'b1) && (ROBcheck[(ROBhead + 1) % 64][12] === 1)) ? ROB[(ROBhead + 1) % 64][31:16] : // commit instr #2
 
                             (bu_jmp & (((ROBhead + 2)%64) === forwardC[21:16])) ? forwardC[15:0] :
-                            (ROBcheck[(ROBhead + 2) % 64][12] === 1) ? ROB[(ROBhead + 2) % 64][31:16] : // commit instr #3
+                            ((ROB[(ROBhead+2)%64][32] === 1'b1) && (ROBcheck[(ROBhead + 2) % 64][12] === 1)) ? ROB[(ROBhead + 2) % 64][31:16] : // commit instr #3
                             
                              pc + 8;
 
