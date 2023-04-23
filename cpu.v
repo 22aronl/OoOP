@@ -440,8 +440,15 @@ module main();
     wire [1:0] d2_useA = {d2_useA_[1] & (ROB[d2_lookA0][32] == 1'b0 & d2_rdataA0[6] == 1'b1), (d2_useA_[0] & ROB[d2_lookA1][32] == 1'b0 & d2_rdataA1[6] == 1'b1)};
     //TODO: Update ROBcheck with the computed values ehre too
 
-    wire [56:0] d2_outputA = {d2_opcodeA, d2_tailA, d2_lookA0, d2_lookA1, d2_valueA0, d2_valueA1, d2_useA, d2_instructA[19]};
+    wire [55:0] d2_outputA_ = {d2_opcodeA, d2_tailA, d2_lookA0, d2_lookA1, d2_valueA0, d2_valueA1, d2_useA};
+    wire [55:0] d2_outputA2;
 
+    forward_check d2_setA(
+        .forwardA(forwardA), .forwardB(forwardB), .forwardC(forwardC), .forwardD(forwardD),
+        .inOperation(d2_outputA_), .outOperation(d2_outputA2)
+    );
+
+    wire [56:0] d2_outputA = {d2_outputA2, d2_instructA[19]};
 
 
     //TODO: Store needs additional memory storage
@@ -512,7 +519,16 @@ module main();
     wire [1:0] d2_useB = {d2_useB_[1] & ((ROB[d2_lookB0][32] == 1'b0 & d2_rdataB0[6] == 1'b1)|d2_lookB0_), d2_useB_[0] & ((ROB[d2_lookB1][32] == 1'b0 & d2_rdataB1[6] == 1'b1)|d2_lookB1_)};
     //TODO: Update ROBcheck with the computed values ehre too
 
-    wire [56:0] d2_outputB = {d2_opcodeB, d2_tailB, d2_lookB0, d2_lookB1, d2_valueB0, d2_valueB1, d2_useB, d2_instructB[19]};
+    wire [55:0] d2_outputB_ = {d2_opcodeB, d2_tailB, d2_lookB0, d2_lookB1, d2_valueB0, d2_valueB1, d2_useB};
+
+    wire [55:0] d2_outputB2;
+
+    forward_check d2_setB(
+        .forwardA(forwardA), .forwardB(forwardB), .forwardC(forwardC), .forwardD(forwardD),
+        .inOperation(d2_outputB_), .outOperation(d2_outputB2)
+    );
+
+    wire [56:0] d2_outputB = {d2_outputB2, d2_instructB[19]};
 
 
         // [22:7]data, [6] busy, [5:0] rob_loc
@@ -590,7 +606,16 @@ module main();
                         d2_useC_[0] & ((ROB[d2_lookC1][32] == 1'b0 & d2_rdataC1[6] == 1'b1)|d2_lookC1_)};
     //TODO: Update ROBcheck with the computed values ehre too
 
-    wire [56:0] d2_outputC = {d2_opcodeC, d2_tailC, d2_lookC0, d2_lookC1, d2_valueC0, d2_valueC1, d2_useC, d2_instructC[19]};
+    wire [55:0] d2_outputC_ = {d2_opcodeC, d2_tailC, d2_lookC0, d2_lookC1, d2_valueC0, d2_valueC1, d2_useC};
+
+    wire [55:0] d2_outputC2;
+
+    forward_check d2_setC(
+        .forwardA(forwardA), .forwardB(forwardB), .forwardC(forwardC), .forwardD(forwardD),
+        .inOperation(d2_outputC_), .outOperation(d2_outputC2)
+    );
+
+    wire [56:0] d2_outputC = {d2_outputC2, d2_instructC[19]};
 
 
         // [22:7]data, [6] busy, [5:0] rob_loc
@@ -674,7 +699,16 @@ module main();
                             d2_useD_[0] & (ROB[d2_lookD1][32] == 1'b0 & d2_rdataD1[6] == 1'b1 | d2_lookD1_)};
     //TODO: Update ROBcheck with the computed values ehre too
     //[56:53] opcode, [52:47] tail, [46:41] look0,
-    wire [56:0] d2_outputD = {d2_opcodeD, d2_tailD, d2_lookD0, d2_lookD1, d2_valueD0, d2_valueD1, d2_useD, d2_instructD[19]};
+    wire [55:0] d2_outputD_ = {d2_opcodeD, d2_tailD, d2_lookD0, d2_lookD1, d2_valueD0, d2_valueD1, d2_useD};
+
+    wire [55:0] d2_outputD2;
+
+    forward_check d2_setD(
+        .forwardA(forwardA), .forwardB(forwardB), .forwardC(forwardC), .forwardD(forwardD),
+        .inOperation(d2_outputD_), .outOperation(d2_outputD2)
+    );
+
+    wire [56:0] d2_outputD = {d2_outputD2, d2_instructD[19]};
 
 
     // [22:7]data, [6] busy, [5:0] rob_loc
@@ -716,15 +750,15 @@ module main();
     reg [5:0] ROBsize = 5'h00;
 
     always @(posedge clk) begin
-        ROB[d1_tailA][15:0] <= pcA;
+        ROB[d1_tailA][15:0] <= d1_pcA;
         ROB[d1_tailA][32] <= 1'b0;
 
         //TODO Update
-        ROB[d1_tailB][15:0] <= pcB;
+        ROB[d1_tailB][15:0] <= d1_pcB;
         ROB[d1_tailB][32] <= 1'b0;
-        ROB[d1_tailC][15:0] <= pcC;
+        ROB[d1_tailC][15:0] <= d1_pcC;
         ROB[d1_tailC][32] <= 1'b0;
-        ROB[d1_tailD][15:0] <= pcD;
+        ROB[d1_tailD][15:0] <= d1_pcD;
         ROB[d1_tailD][32] <= 1'b0;
         if(is_validA)
             ROBtail <= (ROBtail + 4) % 64;
@@ -1073,9 +1107,10 @@ module main();
     wire load_flush = 1'b0; // TODO: change this?
     reg [1:0] store_buffer_commit = 2'b00;
     wire [4:0] load_opcode = lsu_out[55:52];
+    wire [5:0] lsu_in_rob = lsu_out[51:46];
+    wire [15:0] lsu_in_pc = ROB[lsu_in_rob][15:0];
     wire load_is_ld = (lsu_out[55:52]===4'b0010) | (lsu_out[55:52]===4'b1010) | (lsu_out[55:52]===4'b0110);
-
-    wire [15:0] lsu_in_loc0 = (load_opcode === 4'b0011 | load_opcode === 4'b1011) ? ROB[lsu_rob][15:0] : 
+    wire [15:0] lsu_in_loc0 = (load_opcode === 4'b0011 | load_opcode === 4'b1011) ? ROB[lsu_in_rob][15:0] : 
                                 (load_opcode === 4'b0111) ? lsu_out[17:2] :
                                 lsu_out[33:18];
     wire [15:0] lsu_tste = lsu_out[33:18];
@@ -1169,7 +1204,7 @@ module main();
         // check to see if committed instruction is behind a jmp instruction -> do not exec
 
         // Commit 0
-        store_buffer_commit <= cu_one + cu_two + cu_three;
+        store_buffer_commit <= cu_one && ROBcheck[ROBhead][4] === 1'b1 + cu_two && ROBcheck[(ROBhead + 1)%64][4] === 1'b1 + cu_three && ROBcheck[(ROBhead + 2)%64][4] === 1'b1;
         if(ROB[ROBhead][32] === 1'b1) begin
             if(ROBcheck[ROBhead][5] == 1'b1) begin //IsTrapVector
                 if(ROBcheck[ROBhead][13] == 1'b1) begin  // x21

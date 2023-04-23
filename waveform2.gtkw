@@ -1,11 +1,11 @@
 [*]
 [*] GTKWave Analyzer v3.3.108 (w)1999-2020 BSI
-[*] Sun Apr 23 19:51:52 2023
+[*] Sun Apr 23 19:52:57 2023
 [*]
 [dumpfile] "C:\Users\Aaron Lo\Documents\cs429h\OOOP\t2.vcd"
 [dumpfile_mtime] "Sun Apr 23 19:50:51 2023"
 [dumpfile_size] 143788
-[savefile] "C:\Users\Aaron Lo\Documents\cs429h\OOOP\waveform.gtkw"
+[savefile] "C:\Users\Aaron Lo\Documents\cs429h\OOOP\waveform2.gtkw"
 [timestart] 0
 [size] 1536 807
 [pos] -1 -1
@@ -107,11 +107,11 @@ main.useD[1:0]
 @1401200
 -decodeD
 -decode
-@c00200
+@800200
 -decode 2
 @22
 main.d2_opcodeA[3:0]
-@c00200
+@800200
 -decode2_A
 @22
 main.d2_tailA[5:0]
@@ -283,68 +283,6 @@ main.d2_outputA2[55:0]
 @1401200
 -group_end
 @c00022
-main.d2_outputA3[56:0]
-@28
-(0)main.d2_outputA3[56:0]
-(1)main.d2_outputA3[56:0]
-(2)main.d2_outputA3[56:0]
-(3)main.d2_outputA3[56:0]
-(4)main.d2_outputA3[56:0]
-(5)main.d2_outputA3[56:0]
-(6)main.d2_outputA3[56:0]
-(7)main.d2_outputA3[56:0]
-(8)main.d2_outputA3[56:0]
-(9)main.d2_outputA3[56:0]
-(10)main.d2_outputA3[56:0]
-(11)main.d2_outputA3[56:0]
-(12)main.d2_outputA3[56:0]
-(13)main.d2_outputA3[56:0]
-(14)main.d2_outputA3[56:0]
-(15)main.d2_outputA3[56:0]
-(16)main.d2_outputA3[56:0]
-(17)main.d2_outputA3[56:0]
-(18)main.d2_outputA3[56:0]
-(19)main.d2_outputA3[56:0]
-(20)main.d2_outputA3[56:0]
-(21)main.d2_outputA3[56:0]
-(22)main.d2_outputA3[56:0]
-(23)main.d2_outputA3[56:0]
-(24)main.d2_outputA3[56:0]
-(25)main.d2_outputA3[56:0]
-(26)main.d2_outputA3[56:0]
-(27)main.d2_outputA3[56:0]
-(28)main.d2_outputA3[56:0]
-(29)main.d2_outputA3[56:0]
-(30)main.d2_outputA3[56:0]
-(31)main.d2_outputA3[56:0]
-(32)main.d2_outputA3[56:0]
-(33)main.d2_outputA3[56:0]
-(34)main.d2_outputA3[56:0]
-(35)main.d2_outputA3[56:0]
-(36)main.d2_outputA3[56:0]
-(37)main.d2_outputA3[56:0]
-(38)main.d2_outputA3[56:0]
-(39)main.d2_outputA3[56:0]
-(40)main.d2_outputA3[56:0]
-(41)main.d2_outputA3[56:0]
-(42)main.d2_outputA3[56:0]
-(43)main.d2_outputA3[56:0]
-(44)main.d2_outputA3[56:0]
-(45)main.d2_outputA3[56:0]
-(46)main.d2_outputA3[56:0]
-(47)main.d2_outputA3[56:0]
-(48)main.d2_outputA3[56:0]
-(49)main.d2_outputA3[56:0]
-(50)main.d2_outputA3[56:0]
-(51)main.d2_outputA3[56:0]
-(52)main.d2_outputA3[56:0]
-(53)main.d2_outputA3[56:0]
-(54)main.d2_outputA3[56:0]
-(55)main.d2_outputA3[56:0]
-(56)main.d2_outputA3[56:0]
-@1401200
--group_end
-@c00022
 main.d2_outputA[56:0]
 @28
 (0)main.d2_outputA[56:0]
@@ -406,24 +344,22 @@ main.d2_outputA[56:0]
 (56)main.d2_outputA[56:0]
 @1401200
 -group_end
-@28
-main.d2_equalA
-@c00200
+@800200
 -d2_setA
-@28
+@29
 main.d2_setA.user[1:0]
-@22
+@23
 main.d2_setA.inOperation[55:0]
 main.d2_setA.outOperation[55:0]
-@28
+@29
 main.d2_setA.userA
 main.d2_setA.userB
-@22
+@23
 main.d2_setA.valueA[15:0]
 main.d2_setA.valueB[15:0]
 main.d2_setA.valueA_[15:0]
 main.d2_setA.valueB_[15:0]
-@1401200
+@1000200
 -d2_setA
 -decode2_A
 @c00200
@@ -559,6 +495,7 @@ main.d2_valueD1[15:0]
 main.d2_useD[1:0]
 @1401200
 -decode2_D
+@1000200
 -decode 2
 @c00200
 -decodeA
