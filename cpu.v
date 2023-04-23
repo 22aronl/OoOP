@@ -684,8 +684,8 @@ module main();
     //TODO: Add support for the condition registers
     //Ready Bit, Value, PC (for piping into cache & branch checking for now)
     reg [32:0] ROB[0:63];
-    //Addition check for: [11:6] offset6   [7] set=x21 not set=x25 [6] take jump, [5] isTrap, [4] IsStore, [3] IsWriteToReg, [2:0] RegNum
-    reg [7:0] ROBcheck[0:63];
+    //Addition check for:   [13] set=x21 not set=x25 [7] take jump, [11:6] offset6 [5] isTrap, [4] IsStore, [3] IsWriteToReg, [2:0] RegNum
+    reg [13:0] ROBcheck[0:63];
     reg [2:0] ROB_condition_codes[0:63]; // N, Z, P
     reg [5:0] ROBhead = 5'h00;
     reg [5:0] ROBtail = 5'h00;
@@ -711,19 +711,20 @@ module main();
         ROBcheck[d1_tailD] <= {offset6D, is_trapD, is_storeD, writeToRegD, writeRegD};
     end
 
+
     always @(posedge clk) begin
         if(forwardA[22] == 1'b1) begin
             ROB[forwardA[21:16]][31:16] <= forwardA[15:0];
             ROB_condition_codes[forwardA[21:16]] <= condition_code_A;
             ROB[forwardA[21:16]][32] <= 1'b1;
-            ROBcheck[forwardA[21:16]][7] <= alu_value0B == 8'b00100101 ? 1'b0 : 1'b1;
+            ROBcheck[forwardA[21:16]][13] <= alu_value0B == 8'b00100101 ? 1'b0 : 1'b1;
         end
 
         if(forwardB[22] == 1'b1) begin
             ROB[forwardB[21:16]][31:16] <= forwardB[15:0];
             ROB_condition_codes[forwardB[21:16]] <= condition_code_B;
             ROB[forwardB[21:16]][32] <= 1'b1;
-            ROBcheck[forwardB[21:16]][7] <= alu_value1B == 8'b00100101 ? 1'b0 : 1'b1;
+            ROBcheck[forwardB[21:16]][13] <= alu_value1B == 8'b00100101 ? 1'b0 : 1'b1;
         end
 
         if(forwardC[22] == 1'b1) begin
@@ -993,7 +994,6 @@ module main();
         bu_rob <= bu_rs_out[36:32];
         bu_pcval <= bu_rs_out[31:16];
         bu_pcoffset11 <= bu_rs_out[10:0];
-        ROBcheck[bu_rob] <= {bu_jmp, 1'b0, 1'b0, bu_is_jsr, 3'b111};
     end
 
 
@@ -1047,7 +1047,7 @@ module main();
     wire load_flush = 1'b0;
     wire [1:0] store_buffer_commit = 2'b00;
     wire [4:0] load_opcode = lsu_out[55:52];
-    wire load_is_ld = (lsu_out[55:52]===4'b0010) | (lsu_out[56:52]===4'b1010) | (lsu_out[56:52]===4'b0110);
+    wire load_is_ld = (lsu_out[55:52]===4'b0010) | (lsu_out[55:52]===4'b1010) | (lsu_out[55:52]===4'b0110);
 
     wire [15:0] lsu_in_loc0 = (load_opcode === 4'b0011 | load_opcode === 4'b1011) ? ROB[lsu_rob][15:0] : 
                                 (load_opcode === 4'b0111) ? lsu_out[17:2] :
@@ -1091,8 +1091,8 @@ module main();
     reg cu_flush = 1'b0;
 
     wire cu_wen0 = ROB[ROBhead][32] && ROBcheck[ROBhead][3]; // if [4] then should be mem write enabled
-    wire cu_wen1 = ROB[ROBhead][32] && (ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6];
-    wire cu_wen2 = ROB[ROBhead][32] && (ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && (ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && !ROBcheck[(ROBhead + 1) % 64][6];
+    wire cu_wen1 = ROB[ROBhead][32] && (ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][12];
+    wire cu_wen2 = ROB[ROBhead][32] && (ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][12] && (ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && !ROBcheck[(ROBhead + 1) % 64][12];
 
     wire [2:0] cu_waddr0 = ROBcheck[ROBhead][2:0];
     wire [2:0] cu_waddr1 = ROBcheck[(ROBhead+1) % 64][2:0];
@@ -1127,14 +1127,14 @@ module main();
         // TODO move all pc target logic here
         // propogate bu_jmp flush signal here
         // check to see if committed instruction is behind a jmp instruction -> do not exec
-        cu_target <= (ROBcheck[ROBhead][6] === 1) ? ROB[ROBhead][15:0] : 
-                        (ROBcheck[(ROBhead + 1) % 64][6] === 1) ? ROB[ROBhead][15:0] :
-                        (ROBcheck[(ROBhead + 2) % 64][6] === 1) ? ROB[ROBhead][15:0] : pc + 8;
+        cu_target <= (ROBcheck[ROBhead][12] === 1) ? ROB[ROBhead][31:16] : 
+                        (ROBcheck[(ROBhead + 1) % 64][12] === 1) ? ROB[ROBhead][31:16] :
+                        (ROBcheck[(ROBhead + 2) % 64][12] === 1) ? ROB[ROBhead][31:1] : pc + 8;
 
         // Commit 0
         if(ROB[ROBhead][32] === 1'b1) begin
             if(ROBcheck[ROBhead][5] == 1'b1) begin //IsTrapVector
-                if(ROBcheck[ROBhead][7] == 1'b1) begin  // x21
+                if(ROBcheck[ROBhead][13] == 1'b1) begin  // x21
                     $write("%0c", cu_wdata0[7:0]);
                 end
                 else begin  //x 25
@@ -1144,10 +1144,10 @@ module main();
             ROBhead <= (ROBhead + 1) % 64;
             // Commit 1
 
-            if((ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6]) begin
+            if((ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][12]) begin
                 
                 if(ROBcheck[(ROBhead+1) % 64][5] == 1'b1) begin //IsTrapVector
-                    if(ROBcheck[(ROBhead+1) % 64][7] == 1'b1) begin  // x21
+                    if(ROBcheck[(ROBhead+1) % 64][13] == 1'b1) begin  // x21
                         $write("%0c", cu_wdata1[7:0]);
                     end
                     else begin  //x 25
@@ -1156,10 +1156,10 @@ module main();
                 end
                 ROBhead <= (ROBhead + 2) % 64;
                 // Commit 2
-                if((ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && !ROBcheck[(ROBhead + 1) % 64][6]) begin
+                if((ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][12] && !ROBcheck[(ROBhead + 1) % 64][12]) begin
                     
                     if(ROBcheck[(ROBhead+2)%64][5] == 1'b1) begin //IsTrapVector
-                        if(ROBcheck[(ROBhead+2) % 64][7] == 1'b1) begin  // x21
+                        if(ROBcheck[(ROBhead+2) % 64][13] == 1'b1) begin  // x21
                             $write("%0c", cu_wdata2);
                         end
                         else begin  //x 25

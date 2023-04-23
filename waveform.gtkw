@@ -1,20 +1,21 @@
 [*]
 [*] GTKWave Analyzer v3.3.108 (w)1999-2020 BSI
-[*] Sun Apr 23 03:35:51 2023
+[*] Sun Apr 23 03:47:37 2023
 [*]
 [dumpfile] "C:\Users\Aaron Lo\Documents\cs429h\OOOP\t4.vcd"
-[dumpfile_mtime] "Sun Apr 23 03:34:45 2023"
-[dumpfile_size] 84601
+[dumpfile_mtime] "Sun Apr 23 03:45:38 2023"
+[dumpfile_size] 89939
 [savefile] "C:\Users\Aaron Lo\Documents\cs429h\OOOP\waveform.gtkw"
 [timestart] 0
-[size] 1416 715
+[size] 1488 732
 [pos] -1 -1
-*-11.713507 8310 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-11.713507 4040 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] main.
+[treeopen] main.lsu.
 [sst_width] 254
 [signals_width] 198
 [sst_expanded] 1
-[sst_vpaned_height] 446
+[sst_vpaned_height] 428
 @28
 main.clk
 @22
@@ -28,7 +29,7 @@ main.pcC[15:0]
 main.pcD[15:0]
 @1401200
 -fetch
-@800200
+@c00200
 -decode
 @22
 main.instructA[15:0]
@@ -62,17 +63,17 @@ main.regB1[2:0]
 @22
 main.instructC[15:0]
 main.opcodeC[3:0]
-@800201
+@800200
 -decodeC
-@23
+@22
 main.d1_tailC[5:0]
 main.offset6C[15:0]
-@29
+@28
 main.writeToRegC
 main.writeRegC[2:0]
 main.regC0[2:0]
 main.regC1[2:0]
-@1000201
+@1000200
 -decodeC
 @22
 main.instructD[15:0]
@@ -89,7 +90,6 @@ main.regD1[2:0]
 main.useD[1:0]
 @1401200
 -decodeD
-@1000200
 -decode
 @c00200
 -decode 2
@@ -728,7 +728,7 @@ main.forwardC[22:0]
 main.forwardD[22:0]
 @1401200
 -forward
-@c00200
+@c00201
 -alu_unit_1
 @22
 main.alu_opcode1[3:0]
@@ -739,7 +739,7 @@ main.alu_value1B[15:0]
 main.alu_valid1
 @22
 main.alu_out1[15:0]
-@1401200
+@1401201
 -alu_unit_1
 @c00200
 -alu_feeder
@@ -862,6 +862,10 @@ main.lsu_used
 @22
 main.lsu_in_loc[15:0]
 @28
+main.lsu.is_ld
+@22
+main.lsu.ROBloc[5:0]
+@28
 main.load_is_ld
 main.lsu_used
 main.load_stall
@@ -897,17 +901,17 @@ main.lsu.mem_data[15:0]
 main.lsu.out_data[15:0]
 @28
 main.lsu.out_valid
+@800200
+-store_buffer
+@28
+main.lsu.store_buffer.search_valid
+main.lsu.store_buffer.input_valid
+@22
+main.lsu.store_buffer.search_location[15:0]
+main.lsu.store_buffer.search_data[15:0]
+@1000200
+-store_buffer
 @1401200
 -lsu
-@c00200
--lsu_outside
-@22
-main.lsu.out_ROB[5:0]
-main.lsu_in_loc0[15:0]
-main.lsu_in_loc1[15:0]
-main.lsu_offset6[5:0]
-main.lsu_tste[5:0]
-@1401200
--lsu_outside
 [pattern_trace] 1
 [pattern_trace] 0
