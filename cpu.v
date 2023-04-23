@@ -373,11 +373,21 @@ module main();
 
     //TODO: Fix the register dependency checking (simulatenous dependency issues)
 
+    reg [15:0] d2_pcA;
+    reg [15:0] d2_pcB;
+    reg [15:0] d2_pcC;
+    reg [15:0] d2_pcD;
+
     always @(posedge clk) begin
         d1_pcA <= pcA;
         d1_pcB <= pcB;
         d1_pcC <= pcC;
         d1_pcD <= pcD;
+
+        d2_pcA <= d1_pcA;
+        d2_pcB <= d1_pcB;
+        d2_pcC <= d1_pcC;
+        d2_pcD <= d1_pcD;
     end
 
     //Decode 2
@@ -410,7 +420,7 @@ module main();
     wire [5:0] d2_lookA0 = d2_rdataA0[5:0];
     wire [5:0] d2_lookA1 = d2_is_brA ? (d2_tailA +63) % 64:
                             d2_rdataA1[5:0];
-    wire [15:0] d2_valueA0 = (d2_instructA[12] | d2_instructA[14] | d2_instructA[10] | d2_instructA[9] | d2_instructA[7]) ? d1_pcA :
+    wire [15:0] d2_valueA0 = (d2_instructA[12] | d2_instructA[14] | d2_instructA[10] | d2_instructA[9] | d2_instructA[7]) ? d2_pcA :
                                 d2_instructA[13] ? {16{1'b0}} : // ret
                                 d2_rdataA0[6] ? ROB[d2_rdataA0[5:0]] : 
                                 d2_rdataA0[22:7];
@@ -481,7 +491,7 @@ module main();
     wire [5:0]d2_lookB1 = d2_is_brB ? (d2_tailB +63) % 64:
                             d2_lookB1_ ? d2_tailA : d2_rdataB1[5:0];
 
-    wire [15:0] d2_valueB0 = (d2_instructB[12] | d2_instructB[14] | d2_instructB[10] | d2_instructB[9] | d2_instructB[7]) ? d1_pcB :
+    wire [15:0] d2_valueB0 = (d2_instructB[12] | d2_instructB[14] | d2_instructB[10] | d2_instructB[9] | d2_instructB[7]) ? d2_pcB :
                                 d2_instructB[13] ? {16{1'b0}} : // ret
                                 d2_rdataB0[6] ? ROB[d2_rdataB0[5:0]] : 
                                 d2_rdataB0[22:7];
@@ -555,7 +565,7 @@ module main();
                 //TODO: WHY??
 
 
-    wire [15:0] d2_valueC0 = (d2_instructC[12] | d2_instructC[14] | d2_instructC[10] | d2_instructC[9] | d2_instructC[7]) ? d1_pcC :
+    wire [15:0] d2_valueC0 = (d2_instructC[12] | d2_instructC[14] | d2_instructC[10] | d2_instructC[9] | d2_instructC[7]) ? d2_pcC :
                                 d2_instructC[13] ? {16{1'b0}} : // ret
                                 d2_rdataC0[6] ? ROB[d2_rdataC0[5:0]] : 
                                 d2_rdataC0[22:7];
@@ -637,7 +647,7 @@ module main();
                 d2_writeToRegB && (d2_writeRegB == d2_regD1) ? d2_tailB :
                 d2_writeToRegA && (d2_writeRegA == d2_regD1) ? d2_tailA : d2_rdataD1[5:0];
 
-    wire [15:0] d2_valueD0 = (d2_instructD[12] | d2_instructD[14] | d2_instructD[10] | d2_instructD[9] | d2_instructD[7]) ? d1_pcD :
+    wire [15:0] d2_valueD0 = (d2_instructD[12] | d2_instructD[14] | d2_instructD[10] | d2_instructD[9] | d2_instructD[7]) ? d2_pcD :
                                 d2_instructD[13] ? {16{1'b0}} : // ret
                                 d2_rdataD0[6] ? ROB[d2_rdataD0[5:0]] : 
                                 d2_rdataD0[22:7];
