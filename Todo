@@ -17,3 +17,9 @@ andi
 andr
 not
 lea
+
+st
+str
+
+ld
+ldr
