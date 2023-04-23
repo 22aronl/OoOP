@@ -7,7 +7,25 @@ module reservation_station(input clk, input flush,
     reg [56:0] operation [0:4];
     reg [0:4]commited;
     //[56] valid, [55:52]operation, [51:46]rob, [45:40]lookA, [39:34] lookB [33:18] valueA, [17:2] value b, [1:0] user
-    assign operationUsed = (!commited[0] && !commited[1] && !commited[2] && !commited[3] && !commited[4]) & inOperation[56];
+
+    wire [1:0] inOperationUse = inOperation[1:0];
+    wire [5:0] inOperationLookA = inOperation[45:40];
+    wire [5:0] inOperationLookB = inOperation[39:34];
+    wire [5:0] inOperationRob = inOperation[51:46];
+    
+    wire [1:0] commit0 = operation[0][1:0];
+    wire [1:0] commit1 = operation[1][1:0];
+    wire [1:0] commit2 = operation[2][1:0];
+    wire [1:0] commit3 = operation[3][1:0];
+    wire [1:0] commit4 = operation[4][1:0];
+
+    wire committed0 = commited[0];
+    wire committed1 = commited[1];
+    wire committed2 = commited[2];
+    wire committed3 = commited[3];
+    wire committed4 = commited[4];
+
+    assign operationUsed = (!commited[0] | !commited[1] | !commited[2] | !commited[3] | !commited[4]) & inOperation[56];
     integer i;
 
     assign outOperationValid = (commited[0] & operation[0][1:0] === 2'b00) | (commited[1] & operation[1][1:0] === 2'b00) | (commited[2] & operation[2][1:0] === 2'b00) | (commited[3] & operation[3][1:0] === 2'b00) | (commited[4] & operation[4][1:0] === 2'b00);

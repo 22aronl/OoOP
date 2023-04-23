@@ -1,0 +1,33 @@
+@0
+1262 //0
+14a6 //1
+5481 //2
+16e1 //3
+16c2 //4
+12c2 //5
+993f //6
+1244 //7
+106e
+102e
+102e
+102e
+102e
+f021
+
+/*
+.orig x0
+add r1, r1, x2
+add r2, r2, x6
+and r2, r2, r1
+add r3, r3, x1
+add r3, r3, r2
+add r1, r3, r2
+not r4, r4
+add r1, r1, r4
+add r0, r1, xe
+add r0, r0, xe
+add r0, r0, xe
+add r0, r0, xe
+add r0, r0, xe
+.end
+*/

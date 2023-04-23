@@ -5,3 +5,9 @@ Individualized Stalling
 Flushing
 Branch Unit Wiring
 Committing
+Halt using the halt signal, not calling $finish
+
+
+Instructions That Work:
+
+addi

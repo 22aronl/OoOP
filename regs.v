@@ -13,9 +13,9 @@ module regs(input clk,
     input [5:0] rob_locB, input [2:0] rob_waddrB, input rob_wenB,
     input [5:0] rob_locC, input [2:0] rob_waddrC, input rob_wenC,
     input [5:0] rob_locD, input [2:0] rob_waddrD, input rob_wenD,
-    input wen0, input [2:0]waddr0, input [15:0]wdata0,
-    input wen1, input [2:0]waddr1, input [15:0]wdata1,
-    input wen2, input [2:0]waddr2, input [15:0]wdata2);
+    input wen0, input [2:0]waddr0, input [15:0]wdata0, input [5:0] wrob0,
+    input wen1, input [2:0]waddr1, input [15:0]wdata1, input [5:0] wrob1,
+    input wen2, input [2:0]waddr2, input [15:0]wdata2, input [5:0] wrob2);
 
     reg [15:0]data[0:7];
     reg busy[0:7];
@@ -50,7 +50,7 @@ module regs(input clk,
         end
 
         for(i = 0; i < 8; i = i + 1) begin
-            data[i] = 16'h0000; // TODO: Temporary
+            data[i] = 16'h0000;
         end
     end
 
@@ -64,29 +64,42 @@ module regs(input clk,
         raddr6 <= raddr6_;
         raddr7 <= raddr7_;
 
-        if (rob_wenD) begin
-            rob_loc[rob_waddrD] <= rob_locD;
-        end
-        if (rob_wenC) begin
-            rob_loc[rob_waddrC] <= rob_locC;
-        end
-        if (rob_wenB) begin
-            rob_loc[rob_waddrB] <= rob_locB;
-        end
-        if (rob_wenA) begin
-            rob_loc[rob_waddrA] <= rob_locA;
-        end
-
         if (wen0) begin
             data[waddr0] <= wdata0;
+            if(rob_loc[waddr0] === wrob0) begin
+                busy[waddr0] <= 1'b0;
+            end
         end
 
         if(wen1) begin
             data[waddr1] <= wdata1;
+            if(rob_loc[waddr1] === wrob1) begin
+                busy[waddr1] <= 1'b0;
+            end
         end
 
         if(wen2) begin
             data[waddr2] <= wdata2;
+            if(rob_loc[waddr2] === wrob2) begin
+                busy[waddr2] <= 1'b0;
+            end
+        end
+
+        if (rob_wenD) begin
+            rob_loc[rob_waddrD] <= rob_locD;
+            busy[rob_waddrD] <= 1'b1;
+        end
+        if (rob_wenC) begin
+            rob_loc[rob_waddrC] <= rob_locC;
+            busy[rob_waddrC] <= 1'b1;
+        end
+        if (rob_wenB) begin
+            rob_loc[rob_waddrB] <= rob_locB;
+            busy[rob_waddrB] <= 1'b1;
+        end
+        if (rob_wenA) begin
+            rob_loc[rob_waddrA] <= rob_locA;
+            busy[rob_waddrA] <= 1'b1;
         end
     end
 
