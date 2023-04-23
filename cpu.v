@@ -987,7 +987,9 @@ module main();
                 bu_is_br && (bu_br_cond) ||
                 0;
 
-    assign forwardC = {bu_valid, bu_rob, target};
+    wire [5:0] forwardCROB = bu_rob;
+    wire [15:0] forwardCValue = target;
+    assign forwardC = {bu_jmp && bu_valid, bu_rob, target};
 
     always @(posedge clk) begin
         bu_valid <= bu_rs_valid;
@@ -1099,7 +1101,16 @@ module main();
     wire [2:0] cu_waddr1 = ROBcheck[(ROBhead+1) % 64][2:0];
     wire [2:0] cu_waddr2 = ROBcheck[(ROBhead+2) % 64][2:0];
 
-    reg [15:0]cu_target;
+    wire [15:0]cu_target = (ROBcheck[ROBhead][12] === 1 & ROBhead === forwardC[21:16]) ? forwardC[31:16] : // forward from bu
+                            (ROBcheck[ROBhead][12] === 1) ? ROB[ROBhead][31:16] :                       // commit instr #1
+                            
+                            (ROBcheck[(ROBhead + 1) % 64][12] === 1 & (ROBhead + 1)%64 === forwardC[21:16]) ? forwardC[31:16] :
+                            (ROBcheck[(ROBhead + 1) % 64][12] === 1) ? ROB[(ROBhead + 1) % 64][31:16] : // commit instr #2
+
+                            (ROBcheck[(ROBhead + 2) % 64][12] === 1 & (ROBhead + 2)%64 === forwardC[21:16]) ? forwardC[31:16] :
+                            (ROBcheck[(ROBhead + 2) % 64][12] === 1) ? ROB[(ROBhead + 2) % 64][31:16] : // commit instr #3
+                            
+                             pc + 8;
 
     wire [15:0]cu_wdata0 = ROBhead === forwardA[21:16] ? forwardA[31:16] :
                             ROBhead === forwardB[21:16] ? forwardB[31:16] :
@@ -1128,9 +1139,6 @@ module main();
         // TODO move all pc target logic here
         // propogate bu_jmp flush signal here
         // check to see if committed instruction is behind a jmp instruction -> do not exec
-        cu_target <= (ROBcheck[ROBhead][12] === 1) ? ROB[ROBhead][31:16] : 
-                        (ROBcheck[(ROBhead + 1) % 64][12] === 1) ? ROB[ROBhead][31:16] :
-                        (ROBcheck[(ROBhead + 2) % 64][12] === 1) ? ROB[ROBhead][31:1] : pc + 8;
 
         // Commit 0
         if(ROB[ROBhead][32] === 1'b1) begin
