@@ -1,12 +1,12 @@
 @0
-102F
-102F
+102F // 0
+102F 
 102F
 102F
 1025 // put A into r0
 4802 // jsr to print (uses incremented pc)
 102F // skip these two
 102F
-F021 // print
+F021 // print //10
 F025 // halt
 F021 // do not print this

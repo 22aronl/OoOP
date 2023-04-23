@@ -34,7 +34,7 @@ module load_store_unit(
                 load_store_data[i][16] <= 1'b0;
             end
         end else begin
-            load_store[tail] <= {input_valid && is_ld, ROBloc};
+            load_store[tail] <= {input_valid, ROBloc};
             tail <= (tail + 1) % LOAD_SIZE;
             head <= (head + 1) % LOAD_SIZE;
 

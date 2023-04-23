@@ -83,6 +83,7 @@ module main();
 
     regs regs(
         .clk(clk),
+        .flush(flush),
         .raddr0_(raddr[23:21]),
         .raddr1_(raddr[20:18]),
         .raddr2_(raddr[17:15]),
@@ -413,7 +414,7 @@ module main();
     wire [22:0] d2_rdataA0 = rdata[183:161];
     wire [22:0] d2_rdataA1 = rdata[160:138];
 
-    wire [15:0] d2_pc_offset9A = {{7{d2_pc_offset11A[9]}}, d2_pc_offset11A[8:0]};
+    wire [15:0] d2_pc_offset9A = {{7{d2_pc_offset11A[8]}}, d2_pc_offset11A[8:0]};
 
     // [19] is_valid, [18]addr, [17] addi, [16] andr, [15] andi, [14] br, [13] jmp, [12] jsr, [11] jsrr, [10] ld, 
     // [9] ldi, [8] ldr, [7] lea, [6] not, [5] ret, [4] reti, [3] st, [2] sti, [1] str, [0] trap
@@ -485,7 +486,7 @@ module main();
     reg d2_is_bunitB = 1'b0;
     reg [5:0] d2_tailB; //ROB
 
-    wire [15:0] d2_pc_offset9B = {{7{d2_pc_offset11B[9]}}, d2_pc_offset11B[8:0]};
+    wire [15:0] d2_pc_offset9B = {{7{d2_pc_offset11B[8]}}, d2_pc_offset11B[8:0]};
 
     //TODO: update rdara indexs
     wire [22:0] d2_rdataB0 = rdata[137:115];
@@ -552,7 +553,7 @@ module main();
     wire [22:0] d2_rdataC0 = rdata[91:69];
     wire [22:0] d2_rdataC1 = rdata[68:46];
 
-    wire [15:0] d2_pc_offset9C = {{7{d2_pc_offset11C[9]}}, d2_pc_offset11C[8:0]};
+    wire [15:0] d2_pc_offset9C = {{7{d2_pc_offset11C[8]}}, d2_pc_offset11C[8:0]};
 
     reg d2_is_aluunitC = 1'b0;
     reg d2_is_ldunitC = 1'b0;
@@ -634,7 +635,7 @@ module main();
     wire [22:0] d2_rdataD0 = rdata[45:23];
     wire [22:0] d2_rdataD1 = rdata[22:0];
 
-    wire [15:0] d2_pc_offset9D = {{7{d2_pc_offset11D[9]}}, d2_pc_offset11D[8:0]};
+    wire [15:0] d2_pc_offset9D = {{7{d2_pc_offset11D[8]}}, d2_pc_offset11D[8:0]};
 
     reg d2_is_brD;
 
@@ -1052,9 +1053,9 @@ module main();
     wire [56:0] lsu_out;
     wire lsu_used;
     queue lsu_queue(
-        .clk(clk),
-        .flush(),
-        .taken({1'b0, !load_stall & lsu_used}),
+        .clk(clk), 
+        .flush(flush),
+        .taken({1'b0, !load_stall & lsu_used & !load_stall}),
         .forwardA(forwardA), .forwardB(forwardB), .forwardC(forwardC), .forwardD(forwardD),
         .inOperation0(ld_feederA[56:53]), .inROB0(ld_feederA[52:47]), .inLook0A(ld_feederA[46:41]), .inLook0B(ld_feederA[40:35]), .inValue0A(ld_feederA[34:19]), .inValue0B(ld_feederA[18:3]), .inUse0(ld_feederA[2:1]), .inReady0(ld_feederA[0] & ld_feedervalidA),
         .inOperation1(ld_feederB[56:53]), .inROB1(ld_feederB[52:47]), .inLook1A(ld_feederB[46:41]), .inLook1B(ld_feederB[40:35]), .inValue1A(ld_feederB[34:19]), .inValue1B(ld_feederB[18:3]), .inUse1(ld_feederB[2:1]), .inReady1(ld_feederB[0] & ld_feedervalidB),
@@ -1069,8 +1070,8 @@ module main();
     wire [5:0] lsu_rob;
     wire lsu_out_valid;
     assign lsu_used = lsu_out[56] === 1'b1 && lsu_out[1:0] === 2'b00;
-    wire load_flush = 1'b0;
-    wire [1:0] store_buffer_commit = 2'b00;
+    wire load_flush = 1'b0; // TODO: change this?
+    reg [1:0] store_buffer_commit = 2'b00;
     wire [4:0] load_opcode = lsu_out[55:52];
     wire load_is_ld = (lsu_out[55:52]===4'b0010) | (lsu_out[55:52]===4'b1010) | (lsu_out[55:52]===4'b0110);
 
@@ -1087,7 +1088,7 @@ module main();
     //TODO: STORE ISSUE
     //TODO: Load location line up issues
     load_store_unit lsu(
-        .clk(clk),
+        .clk(clk), 
         .flush(load_flush),
         .stores_to_commit(store_buffer_commit),
         .is_ld(load_is_ld), .data(lsu_out[33:18]), .location(lsu_in_loc), .ROBloc(lsu_out[51:46]), .input_valid(lsu_used),
@@ -1113,6 +1114,11 @@ module main();
 
     wire [5:0] headOfROB = ROBcheck[ROBhead];
     wire [32:0] ROBa = ROB[ROBhead];
+    wire cu_one = ROB[ROBhead][32];
+    wire cu_two = cu_one & ROB[(ROBhead+1) % 64][32];
+    wire cu_three = cu_two & ROB[(ROBhead+2) % 64][32];
+
+
     wire flush = (cu_target !== pc + 8);
 
     wire cu_wen0 = ROB[ROBhead][32] && ROBcheck[ROBhead][3]; // if [4] then should be mem write enabled
@@ -1163,6 +1169,7 @@ module main();
         // check to see if committed instruction is behind a jmp instruction -> do not exec
 
         // Commit 0
+        store_buffer_commit <= cu_one + cu_two + cu_three;
         if(ROB[ROBhead][32] === 1'b1) begin
             if(ROBcheck[ROBhead][5] == 1'b1) begin //IsTrapVector
                 if(ROBcheck[ROBhead][13] == 1'b1) begin  // x21

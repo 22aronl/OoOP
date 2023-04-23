@@ -1,6 +1,6 @@
 `timescale 1ps/1ps
 
-module regs(input clk,
+module regs(input clk, input flush,
     input [2:0]raddr0_, output [22:0]rdata0, 
     input [2:0]raddr1_, output [22:0]rdata1,
     input [2:0]raddr2_, output [22:0]rdata2,
@@ -100,6 +100,12 @@ module regs(input clk,
         if (rob_wenA) begin
             rob_loc[rob_waddrA] <= rob_locA;
             busy[rob_waddrA] <= 1'b1;
+        end
+
+        if(flush) begin
+            for(i = 0; i < 8; i = i + 1) begin
+                busy[i] <= 1'b0;
+            end
         end
     end
 
