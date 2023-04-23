@@ -1099,6 +1099,8 @@ module main();
     );
 
     wire forwardDValid = lsu_out_valid;
+    wire [5:0] forwardDROB = lsu_rob;
+    wire [15:0] forwardDData = lsu_data;
     assign forwardD = {lsu_out_valid, lsu_rob, lsu_data};
     wire [2:0] condition_code_D = {1'b1, lsu_data[15], lsu_data == 0, ~lsu_data[15], lsu_rob};
 
@@ -1124,11 +1126,11 @@ module main();
     wire [15:0]cu_target = ((bu_jmp) & (ROBhead === forwardC[21:16])) ? forwardC[15:0] : // forward from bu
                             ((ROB[ROBhead][32] === 1'b1) && (ROBcheck[ROBhead][12] === 1)) ? ROB[ROBhead][31:16] :                       // commit instr #1
                             
-                            (bu_jmp & (((ROBhead + 1)%64) === forwardC[21:16])) ? forwardC[15:0] :
-                            ((ROB[(ROBhead+1)%64][32] === 1'b1) && (ROBcheck[(ROBhead + 1) % 64][12] === 1)) ? ROB[(ROBhead + 1) % 64][31:16] : // commit instr #2
+                            ((ROB[ROBhead][32] === 1'b1) & bu_jmp & (((ROBhead + 1)%64) === forwardC[21:16])) ? forwardC[15:0] :
+                            ((ROB[ROBhead][32] === 1'b1) & (ROB[(ROBhead+1)%64][32] === 1'b1) && (ROBcheck[(ROBhead + 1) % 64][12] === 1)) ? ROB[(ROBhead + 1) % 64][31:16] : // commit instr #2
 
-                            (bu_jmp & (((ROBhead + 2)%64) === forwardC[21:16])) ? forwardC[15:0] :
-                            ((ROB[(ROBhead+2)%64][32] === 1'b1) && (ROBcheck[(ROBhead + 2) % 64][12] === 1)) ? ROB[(ROBhead + 2) % 64][31:16] : // commit instr #3
+                            ((ROB[ROBhead][32] === 1'b1) & (ROB[(ROBhead+1)%64][32] === 1'b1) & bu_jmp & (((ROBhead + 2)%64) === forwardC[21:16])) ? forwardC[15:0] :
+                            ((ROB[ROBhead][32] === 1'b1) & (ROB[(ROBhead+1)%64][32] === 1'b1) & (ROB[(ROBhead+2)%64][32] === 1'b1) && (ROBcheck[(ROBhead + 2) % 64][12] === 1)) ? ROB[(ROBhead + 2) % 64][31:16] : // commit instr #3
                             
                              pc + 8;
 
@@ -1183,7 +1185,7 @@ module main();
                         $finish();
                     end
                 end
-                ROBhead <= (ROBhead + 2) % 64;
+                ROBhead <= (ROBhead + 1) % 64;
                 // Commit 2
                 if((ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][12] && !ROBcheck[(ROBhead + 1) % 64][12]) begin
                     
@@ -1195,7 +1197,7 @@ module main();
                             $finish();
                         end 
                     end
-                    ROBhead <= (ROBhead + 3) % 64;
+                    ROBhead <= (ROBhead + 1) % 64;
                 end
             end
         end
