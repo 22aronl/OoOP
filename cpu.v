@@ -684,7 +684,7 @@ module main();
     //TODO: Add support for the condition registers
     //Ready Bit, Value, PC (for piping into cache & branch checking for now)
     reg [32:0] ROB[0:63];
-    //Addition check for:   [13] set=x21 not set=x25 [7] take jump, [11:6] offset6 [5] isTrap, [4] IsStore, [3] IsWriteToReg, [2:0] RegNum
+    //Addition check for:   [13] set=x21 not set=x25 [12] take jump, [11:6] offset6 [5] isTrap, [4] IsStore, [3] IsWriteToReg, [2:0] RegNum
     reg [13:0] ROBcheck[0:63];
     reg [2:0] ROB_condition_codes[0:63]; // N, Z, P
     reg [5:0] ROBhead = 5'h00;
@@ -730,6 +730,7 @@ module main();
         if(forwardC[22] == 1'b1) begin
             ROB[forwardC[21:16]][31:16] <= forwardC[15:0];
             ROB[forwardC[21:16]][32] <= 1'b1;
+            ROBcheck[forwardC[21:16]][12] <= bu_jmp;
         end
 
         if(forwardD[22] == 1'b1) begin
