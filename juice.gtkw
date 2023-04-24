@@ -1,15 +1,15 @@
 [*]
 [*] GTKWave Analyzer v3.3.115 (w)1999-2023 BSI
-[*] Sat Apr 22 03:35:00 2023
+[*] Mon Apr 24 01:57:00 2023
 [*]
-[dumpfile] "/home/hexated/academics/cs429h/OoOP/t1.vcd"
-[dumpfile_mtime] "Sat Apr 22 03:18:04 2023"
-[dumpfile_size] 44304
+[dumpfile] "/home/hexated/academics/cs429h/OoOP/t0.vcd"
+[dumpfile_mtime] "Mon Apr 24 01:43:44 2023"
+[dumpfile_size] 123954
 [savefile] "/home/hexated/academics/cs429h/OoOP/juice.gtkw"
-[timestart] 0
+[timestart] 8510
 [size] 1910 1024
 [pos] -1 -1
-*-11.492873 2470 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-11.492873 13450 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] main.
 [sst_width] 388
 [signals_width] 275
@@ -37,9 +37,6 @@ main.instructD[15:0]
 -d1_A
 @22
 main.d1_instructA[19:0]
-@28
-main.d1_pcA
-@22
 main.d1_tailA[5:0]
 @28
 main.is_addiA
@@ -52,9 +49,6 @@ main.useA1
 -d1_b
 @22
 main.d1_instructB[19:0]
-@28
-main.d1_pcB
-@22
 main.d1_tailB[5:0]
 @28
 main.is_addiB
@@ -67,9 +61,6 @@ main.useB1
 -d1_C
 @22
 main.d1_instructC[19:0]
-@28
-main.d1_pcC
-@22
 main.d1_tailC[5:0]
 @1401200
 -d1_C
@@ -77,9 +68,6 @@ main.d1_tailC[5:0]
 -d1_D
 @22
 main.d1_instructD[19:0]
-@28
-main.d1_pcD
-@22
 main.d1_tailD[5:0]
 @1401200
 -d1_D
@@ -114,7 +102,7 @@ main.d2_valueB0[15:0]
 main.d2_valueB1[15:0]
 main.d2_lookB0[5:0]
 main.d2_lookB1[5:0]
-@29
+@28
 main.d2_useB[1:0]
 @1000200
 -d2_B
@@ -173,19 +161,21 @@ main.alu_rs_1_valid
 @1000200
 -alu_1
 -alu
+@800201
+-bu
+@29
+main.bu_jmp
+@1000201
+-bu
 @800200
 -rob
 @22
 main.ROBhead[5:0]
-main.ROB_testing1[31:0]
 @1000200
 -rob
 @800200
 -cu
-@28
-main.cu_flush
 @22
-main.trap_read[15:0]
 main.cu_target[15:0]
 @28
 main.cu_waddr0[2:0]
@@ -199,9 +189,6 @@ main.cu_wdata2[15:0]
 main.cu_wen0
 main.cu_wen1
 main.cu_wen2
-@22
-main.ROB_testing[8:0]
-main.trap_read[15:0]
 @1000200
 -cu
 [pattern_trace] 1

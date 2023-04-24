@@ -1153,25 +1153,36 @@ module main();
     wire cu_two = cu_one & ROB[(ROBhead+1) % 64][32];
     wire cu_three = cu_two & ROB[(ROBhead+2) % 64][32];
 
+    // TEST
+    wire[15:0] test_rob = ROB[ROBhead][31:16];
+    wire[15:0] test_rob1 = ROB[ROBhead+1][31:16];
+    wire[15:0] test_rob2 = ROB[ROBhead+2][31:16];
+    wire test_robv = ROB[ROBhead][32];
+    wire test_rob1v = ROB[ROBhead+1][32];
+    wire test_rob2v = ROB[ROBhead+2][32];
+    wire test_condition1 = ((ROB[(ROBhead+1) % 64][32] === 1'b1) && (ROBcheck[ROBhead][12]!==1'b1));
+
 
     wire flush = (cu_target !== pc + 8);
 
     wire cu_wen0 = ROB[ROBhead][32] && ROBcheck[ROBhead][3]; // if [4] then should be mem write enabled
-    wire cu_wen1 = ROB[ROBhead][32] && (ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][12];
-    wire cu_wen2 = ROB[ROBhead][32] && (ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][12] && (ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && !ROBcheck[(ROBhead + 1) % 64][12];
+    wire cu_wen1 = ROB[ROBhead][32] && (ROB[(ROBhead+1) % 64][32] === 1'b1) && (ROBcheck[ROBhead][12] !== 1'b1);
+    wire cu_wen2 = ROB[ROBhead][32] && (ROB[(ROBhead+1) % 64][32] === 1'b1) && (ROBcheck[ROBhead][12] !== 1'b1) && (ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && (ROBcheck[(ROBhead + 1) % 64][12] !== 1'b1);
 
     wire [2:0] cu_waddr0 = ROBcheck[ROBhead][2:0];
     wire [2:0] cu_waddr1 = ROBcheck[(ROBhead+1) % 64][2:0];
-    wire [2:0] cu_waddr2 = ROBcheck[(ROBhead+2) % 64][2:0];
+    wire [2:0] cu_waddr2 = ROBcheck[(ROBhead+2) % 64][2:0];    // wire[15:0] test_rob = ROB[ROBhead][31:16];
+    // wire[15:0] test_rob1 = ROB[ROBhead+1][31:16];
+    // wire[15:0] test_rob2 = ROB[ROBhead+2][31:16];
 
     wire [15:0]cu_target = ((bu_jmp) & (ROBhead === forwardC[21:16])) ? forwardC[15:0] : // forward from bu
-                            ((ROB[ROBhead][32] === 1'b1) && (ROBcheck[ROBhead][12] === 1)) ? ROB[ROBhead][31:16] :                       // commit instr #1
+                            ((ROB[ROBhead][32] === 1'b1) & (ROBcheck[ROBhead][12] === 1)) ? ROB[ROBhead][31:16] :                       // commit instr #1
                             
                             ((ROB[ROBhead][32] === 1'b1) & bu_jmp & (((ROBhead + 1)%64) === forwardC[21:16])) ? forwardC[15:0] :
-                            ((ROB[ROBhead][32] === 1'b1) & (ROB[(ROBhead+1)%64][32] === 1'b1) && (ROBcheck[(ROBhead + 1) % 64][12] === 1)) ? ROB[(ROBhead + 1) % 64][31:16] : // commit instr #2
+                            ((ROB[ROBhead][32] === 1'b1) & (ROB[(ROBhead+1)%64][32] === 1'b1) & (ROBcheck[(ROBhead + 1) % 64][12] === 1)) ? ROB[(ROBhead + 1) % 64][31:16] : // commit instr #2
 
                             ((ROB[ROBhead][32] === 1'b1) & (ROB[(ROBhead+1)%64][32] === 1'b1) & bu_jmp & (((ROBhead + 2)%64) === forwardC[21:16])) ? forwardC[15:0] :
-                            ((ROB[ROBhead][32] === 1'b1) & (ROB[(ROBhead+1)%64][32] === 1'b1) & (ROB[(ROBhead+2)%64][32] === 1'b1) && (ROBcheck[(ROBhead + 2) % 64][12] === 1)) ? ROB[(ROBhead + 2) % 64][31:16] : // commit instr #3
+                            ((ROB[ROBhead][32] === 1'b1) & (ROB[(ROBhead+1)%64][32] === 1'b1) & (ROB[(ROBhead+2)%64][32] === 1'b1) & (ROBcheck[(ROBhead + 2) % 64][12] === 1)) ? ROB[(ROBhead + 2) % 64][31:16] : // commit instr #3
                             
                              pc + 8;
 
@@ -1217,7 +1228,7 @@ module main();
             ROBhead <= (ROBhead + 1) % 64;
             // Commit 1
 
-            if((ROB[(ROBhead+1) % 64][32] === 1'b1) && !ROBcheck[ROBhead][12]) begin
+            if((ROB[(ROBhead+1) % 64][32] === 1'b1) && ROBcheck[ROBhead][12]!==1'b1) begin
                 
                 if(ROBcheck[(ROBhead+1) % 64][5] == 1'b1) begin //IsTrapVector
                     if(ROBcheck[(ROBhead+1) % 64][13] == 1'b1) begin  // x21
@@ -1227,9 +1238,9 @@ module main();
                         $finish();
                     end
                 end
-                ROBhead <= (ROBhead + 1) % 64;
+                ROBhead <= (ROBhead + 2) % 64;
                 // Commit 2
-                if((ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][12] && !ROBcheck[(ROBhead + 1) % 64][12]) begin
+                if((ROB[(ROBhead+2) % 64][32] === 1'b1) && (ROBcheck[ROBhead][12] !== 1'b1) && (ROBcheck[(ROBhead + 1) % 64][12] !== 1'b1)) begin
                     
                     if(ROBcheck[(ROBhead+2)%64][5] == 1'b1) begin //IsTrapVector
                         if(ROBcheck[(ROBhead+2) % 64][13] == 1'b1) begin  // x21
@@ -1239,9 +1250,14 @@ module main();
                             $finish();
                         end 
                     end
-                    ROBhead <= (ROBhead + 1) % 64;
+                    ROBhead <= (ROBhead + 3) % 64;
                 end
             end
+        end
+
+        if(flush) begin
+            ROBhead <= (ROBtail+3)%64;
+            ROBtail <= (ROBtail+3)%64;
         end
     end
 endmodule
