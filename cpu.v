@@ -775,6 +775,8 @@ module main();
     reg [5:0] ROBtail = 5'h00;
     reg [5:0] ROBsize = 5'h00;
 
+    wire almost_full = (ROBhead-(ROBtail+3)+64)%64 <= 3 & (ROBhead !== ROBtail);
+
     always @(posedge clk) begin
         ROB[d1_tailA][15:0] <= d1_pcA;
         ROB[d1_tailA][32] <= 1'b0;
@@ -787,7 +789,7 @@ module main();
         ROB[d1_tailD][15:0] <= d1_pcD;
         ROB[d1_tailD][32] <= 1'b0;
         if(is_validA)
-            ROBtail <= (ROBtail + 4) % 64;
+            ROBtail <= almost_full ? ROBtail : (ROBtail + 4) % 64;
 
         ROBcheck[d1_tailA][11:0] <= {offset6A, is_trapA, is_storeA, writeToRegA, writeRegA};
         ROBcheck[d1_tailB][11:0] <= {offset6B, is_trapB, is_storeB, writeToRegB, writeRegB};
@@ -813,7 +815,7 @@ module main();
             ROB[forwardC[21:16]][31:16] <= forwardC[15:0];
             ROB[forwardC[21:16]][32] <= !flush ? 1'b1 : 1'b0;
             ROBcheck[forwardC[21:16]][12] <= bu_jmp;
-            ROBcheck[forwardC[21:16]][13] <= bu_is_jsr;
+            ROBcheck[forwardC[21:16]][3] <= bu_is_jsr;
             if (bu_is_jsr) begin
                 ROBcheck[forwardC[21:16]][2:0] <= 3'b111;
             end
@@ -1205,7 +1207,8 @@ module main();
     // wire[15:0] test_rob1 = ROB[ROBhead+1][31:16];
     // wire[15:0] test_rob2 = ROB[ROBhead+2][31:16];
 
-    wire [15:0]cu_target = ((bu_jmp) & (ROBhead === forwardC[21:16])) ? forwardC[15:0] : // forward from bu
+    wire [15:0]cu_target = almost_full ? pc :
+                            ((bu_jmp) & (ROBhead === forwardC[21:16])) ? forwardC[15:0] : // forward from bu
                             ((ROB[ROBhead][32] === 1'b1) & (ROBcheck[ROBhead][12] === 1)) ? ROB[ROBhead][31:16] :                       // commit instr #1
                             
                             ((ROB[ROBhead][32] === 1'b1) & bu_jmp & (((ROBhead + 1)%64) === forwardC[21:16])) ? forwardC[15:0] :
