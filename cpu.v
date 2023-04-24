@@ -12,7 +12,7 @@ module main();
         .clk(clk)
     );
 
-    reg halt = 0;
+    reg halt = 1'b0;
     counter ctr(
         .clk(clk),
         .isHalt(halt)
@@ -117,6 +117,8 @@ module main();
         .wdata2(wdata2),
         .wrob2(wrob2)
     );
+
+    reg [5:0] last_arith_ROB_idx;
 
 
     //decode 1
@@ -366,6 +368,31 @@ module main();
     reg d2_rob_wenA;
 
     always @(posedge clk) begin
+        last_arith_ROB_idx <= (is_aluunitD & ~is_trapD) | is_ldunitD ? d1_tailD : 
+                                (is_aluunitC & ~is_trapC) | is_ldunitC ? d1_tailC : 
+                                (is_aluunitB & ~is_trapB) | is_ldunitB ? d1_tailB : 
+                                (is_aluunitA & ~is_trapA) | is_ldunitA ? d1_tailA : 0;
+
+        if (is_brA) begin
+            ROB[d1_tailA][31:25] <= last_arith_ROB_idx;
+        end
+        if (is_brB) begin
+            ROB[d1_tailB][31:25] <= (is_aluunitA & ~is_trapA) | is_ldunitA ? d1_tailA : last_arith_ROB_idx;
+        end
+        if (is_brC) begin
+            ROB[d1_tailC][31:25] <= (is_aluunitB & ~is_trapB) | is_ldunitB ? d1_tailB :
+                                    (is_aluunitA & ~is_trapA) | is_ldunitA ? d1_tailA : last_arith_ROB_idx;
+        end
+        if (is_brD) begin
+            ROB[d1_tailD][31:25] <= (is_aluunitC & ~is_trapC) | is_ldunitC ? d1_tailC : 
+                                    (is_aluunitB & ~is_trapB) | is_ldunitB ? d1_tailB : 
+                                    (is_aluunitA & ~is_trapA) | is_ldunitA ? d1_tailA : 
+                                    last_arith_ROB_idx;
+        end
+
+
+
+        
         d2_rob_wenD <= rob_wenD;
         d2_rob_wenC <= rob_wenC;
         d2_rob_wenB <= rob_wenB;
@@ -744,7 +771,6 @@ module main();
     reg [32:0] ROB[0:63];
     //Addition check for:   [13] set=x21 not set=x25 [12] take jump, [11:6] offset6 [5] isTrap, [4] IsStore, [3] IsWriteToReg, [2:0] RegNum
     reg [13:0] ROBcheck[0:63];
-    reg [2:0] ROB_condition_codes[0:63]; // N, Z, P
     reg [5:0] ROBhead = 5'h00;
     reg [5:0] ROBtail = 5'h00;
     reg [5:0] ROBsize = 5'h00;
@@ -773,14 +799,12 @@ module main();
     always @(posedge clk) begin
         if(forwardA[22] == 1'b1) begin
             ROB[forwardA[21:16]][31:16] <= forwardA[15:0];
-            ROB_condition_codes[forwardA[21:16]] <= condition_code_A;
             ROB[forwardA[21:16]][32] <= !flush ? 1'b1 : 1'b0;
             ROBcheck[forwardA[21:16]][13] <= alu_value0B == 8'b00100101 ? 1'b0 : 1'b1;
         end
 
         if(forwardB[22] == 1'b1) begin
             ROB[forwardB[21:16]][31:16] <= forwardB[15:0];
-            ROB_condition_codes[forwardB[21:16]] <= condition_code_B;
             ROB[forwardB[21:16]][32] <= !flush ? 1'b1 : 1'b0;
             ROBcheck[forwardB[21:16]][13] <= alu_value1B == 8'b00100101 ? 1'b0 : 1'b1;
         end
@@ -789,11 +813,14 @@ module main();
             ROB[forwardC[21:16]][31:16] <= forwardC[15:0];
             ROB[forwardC[21:16]][32] <= !flush ? 1'b1 : 1'b0;
             ROBcheck[forwardC[21:16]][12] <= bu_jmp;
+            ROBcheck[forwardC[21:16]][13] <= bu_is_jsr;
+            if (bu_is_jsr) begin
+                ROBcheck[forwardC[21:16]][2:0] <= 3'b111;
+            end
         end
 
         if(forwardD[22] == 1'b1) begin
             ROB[forwardD[21:16]][31:16] <= forwardD[15:0];
-            ROB_condition_codes[forwardD[21:16]] <= condition_code_D;
             ROB[forwardD[21:16]][32] <= !flush ? 1'b1 : 1'b0;
             // add the thing for trap
         end
@@ -968,8 +995,8 @@ module main();
     wire [5:0] forwardAROB = alu_rob0;
     wire [15:0] forwardAValue = alu_out0;
     assign forwardA = {alu_valid0, alu_rob0, alu_out0};
-    wire [2:0] condition_code_A = (alu_opcode0 == 4'b0001) | (alu_opcode0 == 4'b0101) | (alu_opcode0 == 4'b1001) | (alu_opcode0 == 4'b1110) ?
-                                    {1'b1, alu_out0[15], alu_out0 == 0, ~alu_out0[15], alu_rob0} : 0;
+    // wire [2:0] condition_code_A = (alu_opcode0 == 4'b0001) | (alu_opcode0 == 4'b0101) | (alu_opcode0 == 4'b1001) | (alu_opcode0 == 4'b1110) ?
+    //                                 {1'b1, alu_out0[15], alu_out0 == 0, ~alu_out0[15], alu_rob0} : 0;
 
     always @(posedge clk) begin
         //TODO: link functional unit A to instruction queue
@@ -998,8 +1025,8 @@ module main();
     wire [5:0] forwardBROB = alu_rob1;
     wire [15:0] forwardBValue = alu_out1;
     assign forwardB = {alu_valid1, alu_rob1, alu_out1};
-    wire [2:0] condition_code_B = (alu_opcode1 == 4'b0001) | (alu_opcode1 == 4'b0101) | (alu_opcode1 == 4'b1001) | (alu_opcode1 == 4'b1110) ?
-                                    {1'b1, alu_out1[15], alu_out1 == 0, ~alu_out1[15], alu_rob1} : 0;
+    // wire [2:0] condition_code_B = (alu_opcode1 == 4'b0001) | (alu_opcode1 == 4'b0101) | (alu_opcode1 == 4'b1001) | (alu_opcode1 == 4'b1110) ?
+    //                                 {1'b1, alu_out1[15], alu_out1 == 0, ~alu_out1[15], alu_rob1} : 0;
 
     always @(posedge clk) begin
         alu_valid1 <= alu_rs_1_valid;
@@ -1013,14 +1040,16 @@ module main();
 
     // Branch Unit: uses forwardC
     reg bu_valid;
+    wire [2:0] bu_NZP = {ROB[ROB[bu_rob][31:25]][15]===1, ROB[ROB[bu_rob][31:25]] === 0, ROB[ROB[bu_rob][31:25]][15]===0};
 
     reg [3:0] bu_opcode;
     reg [5:0] bu_rob;
     reg [15:0] bu_pcval;
     reg [11:0] bu_pcoffset11;
+    reg [2:0] bu_nzp;
     reg bu_rflag;
 
-    wire [3:0] bu_nzp = ROB_condition_codes[(bu_rob +63)%64 ];
+    // wire [3:0] bu_nzp = ROB_condition_codes[(bu_rob +63)%64 ];
 
     reg [15:0] bu_value;
     
@@ -1031,21 +1060,21 @@ module main();
                         bu_is_jsr ?
                             (bu_rflag === 0) ? bu_pcval :
                             (bu_pcval + 2) + {{4{bu_pcoffset11[10]}}, {bu_pcoffset11[10:0]}, {1'b0}} :
-                        bu_is_br ? (bu_pcval + 2) + {{5{bu_pcoffset11[10]}}, {bu_pcoffset11[10:0]}}: //I changed this, might not be correct
+                        bu_is_br ? (bu_pcval + 2) + {{bu_pcoffset11[7:0]}, {1'b0}}: //I changed this, might not be correct
                         bu_pcval + 2;
                         
     wire [15:0]bu_r7 = bu_pcval + 2;
 
-    // wire bu_br_cond = (is_br && ((bu_n && bu_nzp[2]) || (bu_z && bu_nzp[1]) || (bu_p && bu_nzp[0])));
-    wire bu_br_cond = 1'b0;
+    wire bu_br_cond = bu_is_br && ((bu_NZP[0] && bu_nzp[0]) || (bu_NZP[1] && bu_nzp[1]) || (bu_NZP[2] && bu_nzp[2]));
+    // wire bu_br_cond = 1'b0;
 
     wire bu_jmp = bu_valid && (bu_is_jmp ||
                 bu_is_jsr ||
                 (bu_is_br && (bu_br_cond)));
 
-    wire [5:0] forwardCROB = bu_rob;
-    wire [15:0] forwardCValue = target;
     assign forwardC = {bu_jmp && bu_valid, bu_rob[5:0], target[15:0]};
+
+    wire [15:0]test_bu = bu_rs_out[15:0];
 
     always @(posedge clk) begin
         bu_valid <= bu_rs_valid;
@@ -1054,6 +1083,7 @@ module main();
         bu_pcval <= bu_rs_out[31:16];
         bu_pcoffset11 <= bu_rs_out[10:0];
         bu_rflag <= bu_rs_out[15];
+        bu_nzp <= bu_rs_out[11:9];
     end
 
 
@@ -1138,7 +1168,7 @@ module main();
     wire [5:0] forwardDROB = lsu_rob;
     wire [15:0] forwardDData = lsu_data;
     assign forwardD = {lsu_out_valid, lsu_rob, lsu_data};
-    wire [2:0] condition_code_D = {1'b1, lsu_data[15], lsu_data == 0, ~lsu_data[15], lsu_rob};
+    // wire [2:0] condition_code_D = {1'b1, lsu_data[15], lsu_data == 0, ~lsu_data[15], lsu_rob};
 
     always @(posedge clk) begin
         if(pc > 500)
@@ -1165,9 +1195,9 @@ module main();
 
     wire flush = (cu_target !== pc + 8);
 
-    wire cu_wen0 = ROB[ROBhead][32] && ROBcheck[ROBhead][3]; // if [4] then should be mem write enabled
-    wire cu_wen1 = ROB[ROBhead][32] && (ROB[(ROBhead+1) % 64][32] === 1'b1) && (ROBcheck[ROBhead][12] !== 1'b1);
-    wire cu_wen2 = ROB[ROBhead][32] && (ROB[(ROBhead+1) % 64][32] === 1'b1) && (ROBcheck[ROBhead][12] !== 1'b1) && (ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && (ROBcheck[(ROBhead + 1) % 64][12] !== 1'b1);
+    wire cu_wen0 = !halt && (ROB[ROBhead][32] === 1) && ROBcheck[ROBhead][3]; // if [4] then should be mem write enabled
+    wire cu_wen1 = !halt && (ROB[ROBhead][32] === 1) && (ROB[(ROBhead+1) % 64][32] === 1'b1) && (ROBcheck[ROBhead][12] !== 1'b1) && ROBcheck[(ROBhead+1)%64][3];
+    wire cu_wen2 = !halt && (ROB[ROBhead][32] === 1) && (ROB[(ROBhead+1) % 64][32] === 1'b1) && (ROBcheck[ROBhead][12] !== 1'b1) && (ROB[(ROBhead+2) % 64][32] === 1'b1) && !ROBcheck[ROBhead][6] && (ROBcheck[(ROBhead + 1) % 64][12] !== 1'b1) && ROBcheck[(ROBhead+2)%64][3];
 
     wire [2:0] cu_waddr0 = ROBcheck[ROBhead][2:0];
     wire [2:0] cu_waddr1 = ROBcheck[(ROBhead+1) % 64][2:0];
@@ -1186,19 +1216,22 @@ module main();
                             
                              pc + 8;
 
-    wire [15:0]cu_wdata0 = ROBhead === forwardA[21:16] ? forwardA[15:0] :
+    wire [15:0]cu_wdata0 =  ROBcheck[ROBhead][12]===1 & ROBcheck[ROBhead][13]===1 ? ROB[ROBhead][15:0] +2 :
+                            ROBhead === forwardA[21:16] ? forwardA[15:0] :
                             ROBhead === forwardB[21:16] ? forwardB[15:0] :
                             ROBhead === forwardC[21:16] ? forwardC[15:0] :
                             ROBhead === forwardD[21:16] ? forwardD[15:0] :
                             ROB[(ROBhead)][31:16];
     // forward the val to be committed
-    wire [15:0]cu_wdata1 = (ROBhead+1) % 64 === forwardA[21:16] ? forwardA[15:0] :
+    wire [15:0]cu_wdata1 =  ROBcheck[(ROBhead+1) % 64 ][12]===1 & ROBcheck[(ROBhead+1) % 64 ][13]===1 ? ROB[(ROBhead+1) % 64 ][15:0] +2 :
+                            (ROBhead+1) % 64 === forwardA[21:16] ? forwardA[15:0] :
                             (ROBhead+1) % 64 === forwardB[21:16] ? forwardB[15:0] :
                             (ROBhead+1) % 64 === forwardC[21:16] ? forwardC[15:0] :
                             (ROBhead+1) % 64 === forwardD[21:16] ? forwardD[15:0] :
                             ROB[(ROBhead+1) % 64][31:16];
 
-    wire [15:0]cu_wdata2 = (ROBhead+2) % 64 === forwardA[21:16] ? forwardA[15:0] :
+    wire [15:0]cu_wdata2 =  ROBcheck[(ROBhead+2) % 64 ][12]===1 & ROBcheck[(ROBhead+2) % 64 ][13]===1 ? ROB[(ROBhead+2) % 64 ][15:0] +2 :
+                            (ROBhead+2) % 64 === forwardA[21:16] ? forwardA[15:0] :
                             (ROBhead+2) % 64 === forwardB[21:16] ? forwardB[15:0] :
                             (ROBhead+2) % 64 === forwardC[21:16] ? forwardC[15:0] :
                             (ROBhead+2) % 64 === forwardD[21:16] ? forwardD[15:0] :
@@ -1215,14 +1248,16 @@ module main();
         // check to see if committed instruction is behind a jmp instruction -> do not exec
 
         // Commit 0
-        store_buffer_commit <= cu_one && ROBcheck[ROBhead][4] === 1'b1 + cu_two && ROBcheck[(ROBhead + 1)%64][4] === 1'b1 + cu_three && ROBcheck[(ROBhead + 2)%64][4] === 1'b1;
-        if(ROB[ROBhead][32] === 1'b1) begin
+        store_buffer_commit <= !halt && cu_one && ROBcheck[ROBhead][4] === 1'b1 + cu_two && ROBcheck[(ROBhead + 1)%64][4] === 1'b1 + cu_three && ROBcheck[(ROBhead + 2)%64][4] === 1'b1;
+        
+        if(ROB[ROBhead][32] === 1'b1 && !halt) begin
             if(ROBcheck[ROBhead][5] == 1'b1) begin //IsTrapVector
                 if(ROBcheck[ROBhead][13] == 1'b1) begin  // x21
                     $write("%0c", cu_wdata0[7:0]);
                 end
                 else begin  //x 25
-                    $finish();
+                    halt <= 1'b1;
+                    // $finish();
                 end 
             end
             ROBhead <= (ROBhead + 1) % 64;
@@ -1235,7 +1270,8 @@ module main();
                         $write("%0c", cu_wdata1[7:0]);
                     end
                     else begin  //x 25
-                        $finish();
+                        halt <= 1'b1;
+                        // $finish();
                     end
                 end
                 ROBhead <= (ROBhead + 2) % 64;
@@ -1247,7 +1283,8 @@ module main();
                             $write("%0c", cu_wdata2);
                         end
                         else begin  //x 25
-                            $finish();
+                            halt <= 1'b1;
+                            // $finish();
                         end 
                     end
                     ROBhead <= (ROBhead + 3) % 64;

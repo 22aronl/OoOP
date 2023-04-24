@@ -5,7 +5,7 @@
 102F
 102F
 1025 // put A into r0
-4802 // jsr to print (uses incremented pc)
+0202 // jsr to print (uses incremented pc)
 102F // skip these two
 102F
 F021 // print //10

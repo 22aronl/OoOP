@@ -1,11 +1,8 @@
-Trap Vector Implementation
-Load & Store extra storage info needed
-Stalling for everything
-Individualized Stalling
+
 Flushing
 Branch Unit Wiring
-Committing
 Halt using the halt signal, not calling $finish
+Stalling when the ROB is full is needed
 
 
 Instructions That Work:
@@ -23,3 +20,6 @@ str
 
 ld
 ldr
+
+things to note/report:
+we use our own convention when doing pc counting, we do every 2 bytes instead of every byte

@@ -9,5 +9,12 @@
 102F // skip these two
 102F
 F021 // print //10
+5020
+1047
+102f
+102f
+102f
+1028
+f021
 F025 // halt
 F021 // do not print this

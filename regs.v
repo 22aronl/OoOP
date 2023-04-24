@@ -22,6 +22,9 @@ module regs(input clk, input flush,
     reg [5:0] rob_loc[0:7];
 
     wire [15:0]test_r0 = data[0];
+    wire [15:0]test_r1 = data[1];
+    wire [15:0]test_r7 = data[7];
+
 
     reg [2:0]raddr0;
     reg [2:0]raddr1;
@@ -41,7 +44,6 @@ module regs(input clk, input flush,
     assign rdata6 = {data[raddr6], busy[raddr6], rob_loc[raddr6]};
     assign rdata7 = {data[raddr7], busy[raddr7], rob_loc[raddr7]};
 
-    assign trap_read = data[0];
 
     integer i;
     initial begin

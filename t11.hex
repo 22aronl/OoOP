@@ -1,0 +1,15 @@
+@0
+// test jmp
+126f
+1265
+102F // 0
+102F 
+102F
+102F
+1025 // put A into r0
+c040 // jsr to print (uses incremented pc)
+102F // skip these two
+102F
+F021 // print //10
+F025 // halt
+F021 // do not print this
