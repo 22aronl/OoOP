@@ -37,7 +37,7 @@ module cache(input clk,
         end
     end
 
-    wire store_en = wen0 & valid[waddr0[7:2]];
+    assign store_en = wen0 & valid[waddr0[7:2]];
 
     always @(posedge clk) begin
         shift_reg[0] <= raddr0_;

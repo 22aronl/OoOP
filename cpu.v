@@ -1173,8 +1173,8 @@ module main();
     // wire [2:0] condition_code_D = {1'b1, lsu_data[15], lsu_data == 0, ~lsu_data[15], lsu_rob};
 
     always @(posedge clk) begin
-        if(pc > 500)
-            halt <= 1;
+        // if(pc > 500)
+            // halt <= 1;
         pc <= cu_target;
         //pc <= target;
     end
@@ -1195,7 +1195,12 @@ module main();
     wire test_condition1 = ((ROB[(ROBhead+1) % 64][32] === 1'b1) && (ROBcheck[ROBhead][12]!==1'b1));
 
 
-    wire flush = (cu_target !== pc + 8);
+    wire flush = ((bu_jmp) & (ROBhead === forwardC[21:16])) |
+            (ROB[ROBhead][32] === 1'b1) & (ROBcheck[ROBhead][12] === 1) |
+            ((ROB[ROBhead][32] === 1'b1) & bu_jmp & (((ROBhead + 1)%64) === forwardC[21:16])) |
+            ((ROB[ROBhead][32] === 1'b1) & (ROB[(ROBhead+1)%64][32] === 1'b1) & (ROBcheck[(ROBhead + 1) % 64][12] === 1)) |
+            ((ROB[ROBhead][32] === 1'b1) & (ROB[(ROBhead+1)%64][32] === 1'b1) & bu_jmp & (((ROBhead + 2)%64) === forwardC[21:16])) |
+            ((ROB[ROBhead][32] === 1'b1) & (ROB[(ROBhead+1)%64][32] === 1'b1) & (ROB[(ROBhead+2)%64][32] === 1'b1) & (ROBcheck[(ROBhead + 2) % 64][12] === 1));
 
     wire cu_wen0 = !halt && (ROB[ROBhead][32] === 1) && ROBcheck[ROBhead][3]; // if [4] then should be mem write enabled
     wire cu_wen1 = !halt && (ROB[ROBhead][32] === 1) && (ROB[(ROBhead+1) % 64][32] === 1'b1) && (ROBcheck[ROBhead][12] !== 1'b1) && ROBcheck[(ROBhead+1)%64][3];
