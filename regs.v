@@ -13,6 +13,7 @@ module regs(input clk, input flush,
     input [5:0] rob_locB, input [2:0] rob_waddrB, input rob_wenB,
     input [5:0] rob_locC, input [2:0] rob_waddrC, input rob_wenC,
     input [5:0] rob_locD, input [2:0] rob_waddrD, input rob_wenD,
+    input stall,
     input wen0, input [2:0]waddr0, input [15:0]wdata0, input [5:0] wrob0,
     input wen1, input [2:0]waddr1, input [15:0]wdata1, input [5:0] wrob1,
     input wen2, input [2:0]waddr2, input [15:0]wdata2, input [5:0] wrob2);
@@ -57,7 +58,7 @@ module regs(input clk, input flush,
     end
 
     always @(posedge clk) begin
-        raddr0 <= raddr0_;
+        raddr0 <= stall ? raddr0 : raddr0_;
         raddr1 <= raddr1_;
         raddr2 <= raddr2_;
         raddr3 <= raddr3_;

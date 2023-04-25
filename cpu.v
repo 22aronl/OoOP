@@ -51,6 +51,7 @@ module main();
         .routput1_(instructB),
         .routput2_(instructC),
         .routput3_(instructD),
+        .stall(almost_full),
         .raddr0_(mem_raddr[15:1]),
         .raddr1_(),
         .rdata0_(mem_rdata),
@@ -99,6 +100,7 @@ module main();
         .rob_locB(d2_tailB), .rob_waddrB(d2_writeRegB), .rob_wenB(d2_rob_wenB),
         .rob_locC(d2_tailC), .rob_waddrC(d2_writeRegC), .rob_wenC(d2_rob_wenC),
         .rob_locD(d2_tailD), .rob_waddrD(d2_writeRegD), .rob_wenD(d2_rob_wenD),
+        .stall(almost_full),
         .wen0(wen0),
         .waddr0(waddr0),
         .wdata0(wdata0),
@@ -387,10 +389,10 @@ module main();
 
 
         
-        d2_rob_wenD <= rob_wenD;
-        d2_rob_wenC <= rob_wenC;
-        d2_rob_wenB <= rob_wenB;
-        d2_rob_wenA <= rob_wenA;
+        d2_rob_wenD <= rob_wenD & is_validD;
+        d2_rob_wenC <= rob_wenC & is_validC;
+        d2_rob_wenB <= rob_wenB & is_validB;
+        d2_rob_wenA <= rob_wenA & is_validA;
     end
 
     //TODO: Fix the register dependency checking (simulatenous dependency issues)
@@ -401,10 +403,10 @@ module main();
     reg [15:0] d2_pcD;
 
     always @(posedge clk) begin
-        d1_pcA <= pcA;
-        d1_pcB <= pcB;
-        d1_pcC <= pcC;
-        d1_pcD <= pcD;
+        d1_pcA <= almost_full ? d1_pcA : pcA;
+        d1_pcB <= almost_full ? d1_pcB : pcB;
+        d1_pcC <= almost_full ? d1_pcC : pcC;
+        d1_pcD <= almost_full ? d1_pcD : pcD;
 
         d2_pcA <= d1_pcA;
         d2_pcB <= d1_pcB;
@@ -759,13 +761,20 @@ module main();
     reg [5:0] ROBhead = 5'h00;
     reg [5:0] ROBtail = 5'h00;
     reg [5:0] ROBsize = 5'h00;
+    reg ROBheadcounter = 1'b0;
+    reg ROBtailcounter = 1'b0;
 
-    wire almost_full = (ROBhead-(ROBtail)+64)%64 <= 3 & (ROBhead !== ROBtail);
+    wire almost_full = (ROBhead-(ROBtail)+64)%64 <= 3 & (ROBheadcounter !== ROBtailcounter);
 
     reg almost_full_prev_cycle = 1'b0;
 
     always @(posedge clk) begin
         almost_full_prev_cycle <= almost_full;
+
+        if((ROBhead + 4) % 64 < ROBhead)
+            ROBheadcounter <= ~ROBheadcounter;
+        if((ROBtail + 4) % 64 < ROBtail)
+            ROBtailcounter <= ~ROBtailcounter;
 
         if(is_validA & !almost_full) begin 
             ROB[d1_tailA][15:0] <= d1_pcA;
@@ -785,8 +794,10 @@ module main();
             ROBcheck[d1_tailD][11:0] <= {offset6D, is_trapD, is_storeD, writeToRegD, writeRegD};
         end
 
-        
     end
+
+    wire [11:0] robcheck3 = ROBcheck[3][11:0];
+    wire [11:0] robcheck4 = ROBcheck[4][11:0];
 
 
     always @(posedge clk) begin
@@ -1307,6 +1318,8 @@ module main();
         if(flush) begin
             ROBhead <= (ROBtail+3)%64;
             ROBtail <= (ROBtail+3)%64;
+            ROBheadcounter <= 0;
+            ROBtailcounter <= 0;
         end
     end
 endmodule

@@ -5,6 +5,7 @@ module mem(input clk,
     input [15:1]rinstruct1_, output [15:0]routput1_,
     input [15:1]rinstruct2_, output [15:0]routput2_,
     input [15:1]rinstruct3_, output [15:0]routput3_, 
+    input stall,
     input [15:1]raddr0_, output [15:0]rdata0_,
     input [15:1]raddr1_, output [15:0]rdata1_,
     input wen0, input [15:1]waddr0, input [15:0]wdata0);
@@ -36,10 +37,10 @@ module mem(input clk,
     assign rdata1_ = rdata1;
 
     always @(posedge clk) begin
-        rinstruct0 <= rinstruct0_;
-        rinstruct1 <= rinstruct1_;
-        rinstruct2 <= rinstruct2_;
-        rinstruct3 <= rinstruct3_;
+        rinstruct0 <= stall ? rinstruct0 : rinstruct0_;
+        rinstruct1 <= stall ? rinstruct1 : rinstruct1_;
+        rinstruct2 <= stall ? rinstruct2 : rinstruct2_;
+        rinstruct3 <= stall ? rinstruct3 : rinstruct3_;
 
         raddr0 <= raddr0_;
         raddr1 <= raddr1_;
