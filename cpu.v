@@ -151,7 +151,7 @@ module main();
     wire is_stiA = (opcodeA === 4'b1011);
     wire is_strA = (opcodeA === 4'b0111);
     wire is_trapA = (opcodeA === 4'b1111);
-    wire is_validA = !flush & !(almost_full_prev_cycle) & (is_addrA | is_addiA | is_andrA | is_andiA | is_brA | 
+    wire is_validA = !flush & !(almost_full) & (is_addrA | is_addiA | is_andrA | is_andiA | is_brA | 
                         is_jmpA | is_jsrA | is_jsrrA | is_ldA | is_ldiA | 
                         is_ldrA | is_leaA | is_notA | is_retA | is_retiA | is_stA | is_stiA | is_strA | is_trapA);
 
@@ -204,7 +204,7 @@ module main();
     wire is_stiB = (opcodeB === 4'b1011);
     wire is_strB = (opcodeB === 4'b0111);
     wire is_trapB = (opcodeB === 4'b1111);
-    wire is_validB = !flush & !(almost_full_prev_cycle) & (is_addrB | is_addiB | is_andrB | is_andiB | is_brB | 
+    wire is_validB = !flush & !(almost_full) & (is_addrB | is_addiB | is_andrB | is_andiB | is_brB | 
                         is_jmpB | is_jsrB | is_jsrrB | is_ldB | is_ldiB | 
                         is_ldrB | is_leaB | is_notB | is_retB | is_retiB | is_stB | is_stiB | is_strB | is_trapB);
 
@@ -259,7 +259,7 @@ module main();
     wire is_stiC = (opcodeC === 4'b1011);
     wire is_strC = (opcodeC === 4'b0111);
     wire is_trapC = (opcodeC === 4'b1111);
-    wire is_validC = !flush & !(almost_full_prev_cycle) & (is_addrC | is_addiC | is_andrC | is_andiC | is_brC | 
+    wire is_validC = !flush & !(almost_full) & (is_addrC | is_addiC | is_andrC | is_andiC | is_brC | 
                         is_jmpC | is_jsrC | is_jsrrC | is_ldC | is_ldiC | 
                         is_ldrC | is_leaC | is_notC | is_retC | is_retiC | is_stC | is_stiC | is_strC | is_trapC);
 
@@ -313,7 +313,7 @@ module main();
     wire is_stiD = (opcodeD === 4'b1011);
     wire is_strD = (opcodeD === 4'b0111);
     wire is_trapD = (opcodeD === 4'b1111);
-    wire is_validD = !flush & !(almost_full_prev_cycle) & (is_addrD | is_addiD | is_andrD | is_andiD | is_brD | 
+    wire is_validD = !flush & !(almost_full) & (is_addrD | is_addiD | is_andrD | is_andiD | is_brD | 
                         is_jmpD | is_jsrD | is_jsrrD | is_ldD | is_ldiD | 
                         is_ldrD | is_leaD | is_notD | is_retD | is_retiD | is_stD | is_stiD | is_strD | is_trapD);
 
@@ -462,7 +462,7 @@ module main();
                                 d2_rdataA1[22:7];
 
     wire robLookA0 = ROB[d2_lookA0][32];
-    
+    wire d2_validA = d2_instructA[19];
     wire [1:0] d2_useA = {d2_useA_[1] & (ROB[d2_lookA0][32] == 1'b0 & d2_rdataA0[6] == 1'b1), (d2_useA_[0] & ROB[d2_lookA1][32] == 1'b0 & d2_rdataA1[6] == 1'b1)};
     //TODO: Update ROBcheck with the computed values ehre too
 
@@ -760,14 +760,14 @@ module main();
     reg [5:0] ROBtail = 5'h00;
     reg [5:0] ROBsize = 5'h00;
 
-    wire almost_full = (ROBhead-(ROBtail+3)+64)%64 <= 3 & (ROBhead !== ROBtail);
+    wire almost_full = (ROBhead-(ROBtail)+64)%64 <= 3 & (ROBhead !== ROBtail);
 
     reg almost_full_prev_cycle = 1'b0;
 
     always @(posedge clk) begin
         almost_full_prev_cycle <= almost_full;
 
-        if(is_validA) begin 
+        if(is_validA & !almost_full) begin 
             ROB[d1_tailA][15:0] <= d1_pcA;
             ROB[d1_tailA][32] <= 1'b0;
 
@@ -1255,6 +1255,8 @@ module main();
 
     //ROB Commit Unit
     always @(posedge clk) begin
+        // if(pc > 50000)
+        //     halt <= 1;
         // TODO move all pc target logic here
         // propogate bu_jmp flush signal here
         // check to see if committed instruction is behind a jmp instruction -> do not exec
