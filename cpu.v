@@ -77,6 +77,26 @@ module main();
     wire [5:0] wrob1 = cu_wrob1;
     wire [5:0] wrob2 = cu_wrob2;
 
+    reg d2_rob_wenD;
+    reg d2_rob_wenC;
+    reg d2_rob_wenB;
+    reg d2_rob_wenA;
+
+    reg [2:0] d2_writeRegA;
+    reg [2:0] d2_writeRegB;
+    reg [2:0] d2_writeRegC;
+    reg [2:0] d2_writeRegD;
+
+    reg [5:0] d2_tailA;
+    reg [5:0] d2_tailB;
+    reg [5:0] d2_tailC;
+    reg [5:0] d2_tailD;
+
+    reg ROBheadcounter = 1'b0;
+    reg ROBtailcounter = 1'b0;
+
+    wire almost_full = (ROBhead-(ROBtail)+64)%64 <= 3 & (ROBheadcounter !== ROBtailcounter);
+    wire flush; 
     regs regs(
         .clk(clk),
         .flush(flush),
@@ -116,6 +136,12 @@ module main();
     );
 
     reg [5:0] last_arith_ROB_idx;
+
+    // [22] Valid Bit [21:16] Rob instruction [15:0] Rob Value
+    wire [22:0] forwardA;
+    wire [22:0] forwardB;
+    wire [22:0] forwardC;
+    wire [22:0] forwardD;
 
     // // // // //
     // Decode 1 //
@@ -358,10 +384,6 @@ module main();
                     (writeToRegC && (writeRegC == writeRegA)) ||  
                     (writeToRegB && (writeRegB == writeRegA)) ? 0 : writeToRegA;
 
-    reg d2_rob_wenD;
-    reg d2_rob_wenC;
-    reg d2_rob_wenB;
-    reg d2_rob_wenA;
 
     always @(posedge clk) begin
         last_arith_ROB_idx <= (is_aluunitD & ~is_trapD) | is_ldunitD ? d1_tailD : 
@@ -426,9 +448,7 @@ module main();
     reg [15:0] d2_pc_offset11A;
     reg [15:0] d2_offset6A;
     reg d2_writeToRegA;
-    reg [2:0] d2_writeRegA;
 
-    reg [5:0] d2_tailA; //ROB
     reg [3:0] d2_opcodeA; //Operation
     reg [2:0] d2_regA0;
     reg [2:0] d2_regA1;
@@ -505,7 +525,6 @@ module main();
     reg [15:0] d2_pc_offset11B;
     reg [15:0] d2_offset6B;
     reg d2_writeToRegB;
-    reg [2:0] d2_writeRegB;
 
     reg [3:0] d2_opcodeB; //Operation
     reg [2:0] d2_regB0;
@@ -517,7 +536,6 @@ module main();
     reg d2_is_aluunitB = 1'b0;
     reg d2_is_ldunitB = 1'b0;
     reg d2_is_bunitB = 1'b0;
-    reg [5:0] d2_tailB; //ROB
 
     wire [15:0] d2_pc_offset9B = {{7{d2_pc_offset11B[8]}}, d2_pc_offset11B[8:0]};
 
@@ -580,10 +598,8 @@ module main();
     reg [15:0] d2_pc_offset11C;
     reg [15:0] d2_offset6C;
     reg d2_writeToRegC;
-    reg [2:0] d2_writeRegC;
     reg [2:0] d2_regC0;
     reg [2:0] d2_regC1;
-    reg [5:0] d2_tailC; //ROB
     reg [3:0] d2_opcodeC; //Operation
 
     reg d2_is_brC;
@@ -669,9 +685,7 @@ module main();
     reg [15:0] d2_pc_offset11D;
     reg [15:0] d2_offset6D;
     reg d2_writeToRegD;
-    reg [2:0] d2_writeRegD;
 
-    reg [5:0] d2_tailD; //ROB
     reg [3:0] d2_opcodeD; //Operation
     reg [2:0] d2_regD0;
     reg [2:0] d2_regD1;
@@ -761,10 +775,7 @@ module main();
     reg [5:0] ROBhead = 5'h00;
     reg [5:0] ROBtail = 5'h00;
     reg [5:0] ROBsize = 5'h00;
-    reg ROBheadcounter = 1'b0;
-    reg ROBtailcounter = 1'b0;
 
-    wire almost_full = (ROBhead-(ROBtail)+64)%64 <= 3 & (ROBheadcounter !== ROBtailcounter);
 
     reg almost_full_prev_cycle = 1'b0;
 
@@ -838,11 +849,7 @@ module main();
     // Forwarding BUS //
     // // // // // // //
 
-    // [22] Valid Bit [21:16] Rob instruction [15:0] Rob Value
-    wire [22:0] forwardA;
-    wire [22:0] forwardB;
-    wire [22:0] forwardC;
-    wire [22:0] forwardD;
+
 
 
     // // // // // // // //
@@ -1113,6 +1120,7 @@ module main();
 
     wire [56:0] lsu_out;
     wire lsu_used;
+    wire load_stall;
     queue lsu_queue(
         .clk(clk), 
         .flush(flush),
@@ -1126,7 +1134,7 @@ module main();
         .outOperation1()
     );
 
-    wire load_stall;
+
     wire [15:0] lsu_data;
     wire [5:0] lsu_rob;
     wire lsu_out_valid;
@@ -1190,7 +1198,7 @@ module main();
     wire test_condition1 = ((ROB[(ROBhead+1) % 64][32] === 1'b1) && (ROBcheck[ROBhead][12]!==1'b1));
 
 
-    wire flush = ((bu_jmp) & (ROBhead === forwardC[21:16])) |
+    assign flush = ((bu_jmp) & (ROBhead === forwardC[21:16])) |
             (ROB[ROBhead][32] === 1'b1) & (ROBcheck[ROBhead][12] === 1) |
             ((ROB[ROBhead][32] === 1'b1) & bu_jmp & (((ROBhead + 1)%64) === forwardC[21:16])) |
             ((ROB[ROBhead][32] === 1'b1) & (ROB[(ROBhead+1)%64][32] === 1'b1) & (ROBcheck[(ROBhead + 1) % 64][12] === 1)) |
