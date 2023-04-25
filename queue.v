@@ -33,6 +33,11 @@ module queue(
     end
 
     always @(posedge clk) begin
+        if(taken == 2'b01)
+            valid[(head)%QUEUE_SIZE] <= 1'b0;
+        if(taken == 2'b10)
+            valid[(head + 1)%QUEUE_SIZE] <= 1'b0;
+
         head <= (head + taken) % QUEUE_SIZE;
 
         if(inReady0) begin

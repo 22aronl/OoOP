@@ -126,6 +126,7 @@ module main();
     reg [15:0]d1_pcB;
     reg [15:0]d1_pcC;
     reg [15:0]d1_pcD;
+    reg d1_valid;
 
     //TODO: Deal with Condition Codes pls
 
@@ -155,7 +156,7 @@ module main();
     wire is_stiA = (opcodeA === 4'b1011);
     wire is_strA = (opcodeA === 4'b0111);
     wire is_trapA = (opcodeA === 4'b1111);
-    wire is_validA = !flush && (is_addrA | is_addiA | is_andrA | is_andiA | is_brA | 
+    wire is_validA = !flush & !(almost_full_prev_cycle) & (is_addrA | is_addiA | is_andrA | is_andiA | is_brA | 
                         is_jmpA | is_jsrA | is_jsrrA | is_ldA | is_ldiA | 
                         is_ldrA | is_leaA | is_notA | is_retA | is_retiA | is_stA | is_stiA | is_strA | is_trapA);
 
@@ -209,7 +210,7 @@ module main();
     wire is_stiB = (opcodeB === 4'b1011);
     wire is_strB = (opcodeB === 4'b0111);
     wire is_trapB = (opcodeB === 4'b1111);
-    wire is_validB = !flush && (is_addrB | is_addiB | is_andrB | is_andiB | is_brB | 
+    wire is_validB = !flush & !(almost_full_prev_cycle) & (is_addrB | is_addiB | is_andrB | is_andiB | is_brB | 
                         is_jmpB | is_jsrB | is_jsrrB | is_ldB | is_ldiB | 
                         is_ldrB | is_leaB | is_notB | is_retB | is_retiB | is_stB | is_stiB | is_strB | is_trapB);
 
@@ -263,7 +264,7 @@ module main();
     wire is_stiC = (opcodeC === 4'b1011);
     wire is_strC = (opcodeC === 4'b0111);
     wire is_trapC = (opcodeC === 4'b1111);
-    wire is_validC = !flush && (is_addrC | is_addiC | is_andrC | is_andiC | is_brC | 
+    wire is_validC = !flush & !(almost_full_prev_cycle) & (is_addrC | is_addiC | is_andrC | is_andiC | is_brC | 
                         is_jmpC | is_jsrC | is_jsrrC | is_ldC | is_ldiC | 
                         is_ldrC | is_leaC | is_notC | is_retC | is_retiC | is_stC | is_stiC | is_strC | is_trapC);
 
@@ -318,7 +319,7 @@ module main();
     wire is_stiD = (opcodeD === 4'b1011);
     wire is_strD = (opcodeD === 4'b0111);
     wire is_trapD = (opcodeD === 4'b1111);
-    wire is_validD = !flush && (is_addrD | is_addiD | is_andrD | is_andiD | is_brD | 
+    wire is_validD = !flush & !(almost_full_prev_cycle) & (is_addrD | is_addiD | is_andrD | is_andiD | is_brD | 
                         is_jmpD | is_jsrD | is_jsrrD | is_ldD | is_ldiD | 
                         is_ldrD | is_leaD | is_notD | is_retD | is_retiD | is_stD | is_stiD | is_strD | is_trapD);
 
@@ -446,6 +447,12 @@ module main();
     // [19] is_valid, [18]addr, [17] addi, [16] andr, [15] andi, [14] br, [13] jmp, [12] jsr, [11] jsrr, [10] ld, 
     // [9] ldi, [8] ldr, [7] lea, [6] not, [5] ret, [4] reti, [3] st, [2] sti, [1] str, [0] trap
     
+    wire test_d2_validA = d2_instructA[19];
+    wire test_d2_validB = d2_instructB[19];
+    wire test_d2_validC = d2_instructC[19];
+    wire test_d2_validD = d2_instructD[19];
+
+
     //TODO: Storage issues for store commands
     wire [5:0] d2_lookA0 = d2_rdataA0[5:0];
     wire [5:0] d2_lookA1 = d2_is_brA ? (d2_tailA +63) % 64:
@@ -758,15 +765,11 @@ module main();
         d2_useD_ <= useD;
     end 
 
-
-    //TODO: Store Instructions into buffer to be put into the reservation stations
-
     // // // // //
     //    ROB   //
     // // // // //
 
 
-    //TODO: Add support for the condition registers
     //Ready Bit, Value, PC (for piping into cache & branch checking for now)
     reg [32:0] ROB[0:63];
     //Addition check for:   [13] set=x21 not set=x25 [12] take jump, [11:6] offset6 [5] isTrap, [4] IsStore, [3] IsWriteToReg, [2:0] RegNum
@@ -777,24 +780,30 @@ module main();
 
     wire almost_full = (ROBhead-(ROBtail+3)+64)%64 <= 3 & (ROBhead !== ROBtail);
 
+    reg almost_full_prev_cycle = 1'b0;
+
     always @(posedge clk) begin
-        ROB[d1_tailA][15:0] <= d1_pcA;
-        ROB[d1_tailA][32] <= 1'b0;
+        almost_full_prev_cycle <= almost_full;
 
-        //TODO Update
-        ROB[d1_tailB][15:0] <= d1_pcB;
-        ROB[d1_tailB][32] <= 1'b0;
-        ROB[d1_tailC][15:0] <= d1_pcC;
-        ROB[d1_tailC][32] <= 1'b0;
-        ROB[d1_tailD][15:0] <= d1_pcD;
-        ROB[d1_tailD][32] <= 1'b0;
-        if(is_validA)
+        if(is_validA) begin 
+            ROB[d1_tailA][15:0] <= d1_pcA;
+            ROB[d1_tailA][32] <= 1'b0;
+
+            //TODO Update
+            ROB[d1_tailB][15:0] <= d1_pcB;
+            ROB[d1_tailB][32] <= 1'b0;
+            ROB[d1_tailC][15:0] <= d1_pcC;
+            ROB[d1_tailC][32] <= 1'b0;
+            ROB[d1_tailD][15:0] <= d1_pcD;
+            ROB[d1_tailD][32] <= 1'b0;
             ROBtail <= almost_full ? ROBtail : (ROBtail + 4) % 64;
+            ROBcheck[d1_tailA][11:0] <= {offset6A, is_trapA, is_storeA, writeToRegA, writeRegA};
+            ROBcheck[d1_tailB][11:0] <= {offset6B, is_trapB, is_storeB, writeToRegB, writeRegB};
+            ROBcheck[d1_tailC][11:0] <= {offset6C, is_trapC, is_storeC, writeToRegC, writeRegC};
+            ROBcheck[d1_tailD][11:0] <= {offset6D, is_trapD, is_storeD, writeToRegD, writeRegD};
+        end
 
-        ROBcheck[d1_tailA][11:0] <= {offset6A, is_trapA, is_storeA, writeToRegA, writeRegA};
-        ROBcheck[d1_tailB][11:0] <= {offset6B, is_trapB, is_storeB, writeToRegB, writeRegB};
-        ROBcheck[d1_tailC][11:0] <= {offset6C, is_trapC, is_storeC, writeToRegC, writeRegC};
-        ROBcheck[d1_tailD][11:0] <= {offset6D, is_trapD, is_storeD, writeToRegD, writeRegD};
+        
     end
 
 
@@ -802,13 +811,17 @@ module main();
         if(forwardA[22] == 1'b1) begin
             ROB[forwardA[21:16]][31:16] <= forwardA[15:0];
             ROB[forwardA[21:16]][32] <= !flush ? 1'b1 : 1'b0;
-            ROBcheck[forwardA[21:16]][13] <= alu_value0B == 8'b00100101 ? 1'b0 : 1'b1;
+            if ((ROBcheck[forwardA[21:16]][5] === 1'b1) & (alu_opcode0 === 4'b1111)) begin 
+                ROBcheck[forwardA[21:16]][13] <= alu_value0B === 8'b00100101 ? 1'b0 : 1'b1;
+            end
         end
 
         if(forwardB[22] == 1'b1) begin
             ROB[forwardB[21:16]][31:16] <= forwardB[15:0];
             ROB[forwardB[21:16]][32] <= !flush ? 1'b1 : 1'b0;
-            ROBcheck[forwardB[21:16]][13] <= alu_value1B == 8'b00100101 ? 1'b0 : 1'b1;
+            if ((ROBcheck[forwardB[21:16]][5] === 1'b1) & (alu_opcode1 === 4'b1111)) begin 
+                ROBcheck[forwardB[21:16]][13] <= alu_value1B === 8'b00100101 ? 1'b0 : 1'b1;
+            end
         end
 
         if(forwardC[22] == 1'b1) begin
@@ -828,9 +841,9 @@ module main();
         end
     end
 
-    // // //
-    // Forwarding BUS
-    // // //
+    // // // // // // //
+    // Forwarding BUS //
+    // // // // // // //
 
     // [22] Valid Bit [21:16] Rob instruction [15:0] Rob Value
     wire [22:0] forwardA;
@@ -844,9 +857,9 @@ module main();
     // // // // // // // //
 
 
-    // // //
+    // // // //  // 
     // ALU Queue //
-    // // //
+    // // // //  //
 
     //TODO: Fix Wiring
     wire [56:0] alu_feederA;
@@ -945,8 +958,7 @@ module main();
         .outOperationD(bu_feederD), .outValidD(bu_feedervalidD)
     );
 
-    // TODO: get condition flags from result of pc - 2
-    wire [1:0] bu_buq_used = {1'b0, buq_used & bu_queue_valid}; //?? why would you put 1'b1 here
+    wire [1:0] bu_buq_used = {1'b0, buq_used & bu_queue_valid};
     wire buq_used;
     wire [56:0] buq_out;
     wire bu_queue_valid = buq_out[56] === 1'b1;
@@ -997,8 +1009,6 @@ module main();
     wire [5:0] forwardAROB = alu_rob0;
     wire [15:0] forwardAValue = alu_out0;
     assign forwardA = {alu_valid0, alu_rob0, alu_out0};
-    // wire [2:0] condition_code_A = (alu_opcode0 == 4'b0001) | (alu_opcode0 == 4'b0101) | (alu_opcode0 == 4'b1001) | (alu_opcode0 == 4'b1110) ?
-    //                                 {1'b1, alu_out0[15], alu_out0 == 0, ~alu_out0[15], alu_rob0} : 0;
 
     always @(posedge clk) begin
         //TODO: link functional unit A to instruction queue
@@ -1027,8 +1037,6 @@ module main();
     wire [5:0] forwardBROB = alu_rob1;
     wire [15:0] forwardBValue = alu_out1;
     assign forwardB = {alu_valid1, alu_rob1, alu_out1};
-    // wire [2:0] condition_code_B = (alu_opcode1 == 4'b0001) | (alu_opcode1 == 4'b0101) | (alu_opcode1 == 4'b1001) | (alu_opcode1 == 4'b1110) ?
-    //                                 {1'b1, alu_out1[15], alu_out1 == 0, ~alu_out1[15], alu_rob1} : 0;
 
     always @(posedge clk) begin
         alu_valid1 <= alu_rs_1_valid;
@@ -1050,9 +1058,6 @@ module main();
     reg [11:0] bu_pcoffset11;
     reg [2:0] bu_nzp;
     reg bu_rflag;
-
-    // wire [3:0] bu_nzp = ROB_condition_codes[(bu_rob +63)%64 ];
-
     reg [15:0] bu_value;
     
     wire bu_is_jmp = (bu_opcode == 4'b1100);
@@ -1068,7 +1073,6 @@ module main();
     wire [15:0]bu_r7 = bu_pcval + 2;
 
     wire bu_br_cond = bu_is_br && ((bu_NZP[0] && bu_nzp[0]) || (bu_NZP[1] && bu_nzp[1]) || (bu_NZP[2] && bu_nzp[2]));
-    // wire bu_br_cond = 1'b0;
 
     wire bu_jmp = bu_valid && (bu_is_jmp ||
                 bu_is_jsr ||
@@ -1249,6 +1253,26 @@ module main();
     wire [5:0] cu_wrob1 = (ROBhead+1) % 64;
     wire [5:0] cu_wrob2 = (ROBhead+2) % 64;
 
+    wire test_halt_valid = ROB[0][32];
+    wire test_print_valid = ROB[63][32];
+    wire test_halt_istrap = ROBcheck[0][5];
+    wire test_print_istrap = ROBcheck[63][5];
+
+    wire test_trap0 = ROBcheck[(ROBhead+0) % 64][5];
+    wire test_trap1 = ROBcheck[(ROBhead+1) % 64][5];
+    wire test_trap2 = ROBcheck[(ROBhead+2) % 64][5];
+    wire test_x21_0 = ROBcheck[ROBhead][13];
+    wire test_x21_1 = ROBcheck[(ROBhead+1)%64][13];
+    wire test_x21_2 = ROBcheck[(ROBhead+2)%64][13];
+    wire test_valid0 = ROB[(ROBhead+0) % 64][32];
+    wire test_valid1 = ROB[(ROBhead+1) % 64][32];
+    wire test_valid2 = ROB[(ROBhead+2) % 64][32];
+
+    wire test_halt = ROBcheck[0][13];
+
+    
+    
+
     //ROB Commit Unit
     always @(posedge clk) begin
         // TODO move all pc target logic here
@@ -1259,13 +1283,13 @@ module main();
         store_buffer_commit <= !halt && cu_one && ROBcheck[ROBhead][4] === 1'b1 + cu_two && ROBcheck[(ROBhead + 1)%64][4] === 1'b1 + cu_three && ROBcheck[(ROBhead + 2)%64][4] === 1'b1;
         
         if(ROB[ROBhead][32] === 1'b1 && !halt) begin
-            if(ROBcheck[ROBhead][5] == 1'b1) begin //IsTrapVector
-                if(ROBcheck[ROBhead][13] == 1'b1) begin  // x21
+            if(ROBcheck[ROBhead][5] === 1'b1) begin //IsTrapVector
+                // if((ROBcheck[ROBhead][13] === 1'b1 && ROBhead!==forwardA[21:16] && ROBhead!==forwardB[21:16]) || (ROBhead===forwardA[21:16] && alu_value0B === 8'b00100001) || (ROBhead ===forwardB[21:16] && alu_value1B === 8'b00100001)) begin  // x21
+                if(ROBcheck[ROBhead][13] === 1'b1) begin
                     $write("%0c", cu_wdata0[7:0]);
                 end
                 else begin  //x 25
                     halt <= 1'b1;
-                    // $finish();
                 end 
             end
             ROBhead <= (ROBhead + 1) % 64;
@@ -1273,29 +1297,31 @@ module main();
 
             if((ROB[(ROBhead+1) % 64][32] === 1'b1) && ROBcheck[ROBhead][12]!==1'b1) begin
                 
-                if(ROBcheck[(ROBhead+1) % 64][5] == 1'b1) begin //IsTrapVector
-                    if(ROBcheck[(ROBhead+1) % 64][13] == 1'b1) begin  // x21
+                if(ROBcheck[(ROBhead+1) % 64][5] === 1'b1) begin //IsTrapVectorf021
+                    // if((ROBcheck[(ROBhead+1) % 64][13] === 1'b1 && ((ROBhead+1) % 64)!==forwardA[21:16] && ((ROBhead+1) % 64))!==forwardB[21:16]|| ((ROBhead+1)%64===forwardA[21:16] && alu_value0B === 8'b00100001) || ((ROBhead+1)%64 ===forwardB[21:16] && alu_value1B === 8'b00100001)) begin  // x21
+                    if(ROBcheck[(ROBhead+1) % 64][13] === 1'b1) begin
                         $write("%0c", cu_wdata1[7:0]);
                     end
                     else begin  //x 25
                         halt <= 1'b1;
-                        // $finish();
                     end
                 end
                 ROBhead <= (ROBhead + 2) % 64;
+                // ROB[(ROBhead + 1)%64][32] <= 1'b0;
                 // Commit 2
                 if((ROB[(ROBhead+2) % 64][32] === 1'b1) && (ROBcheck[ROBhead][12] !== 1'b1) && (ROBcheck[(ROBhead + 1) % 64][12] !== 1'b1)) begin
                     
-                    if(ROBcheck[(ROBhead+2)%64][5] == 1'b1) begin //IsTrapVector
-                        if(ROBcheck[(ROBhead+2) % 64][13] == 1'b1) begin  // x21
+                    if(ROBcheck[(ROBhead+2)%64][5] === 1'b1) begin //IsTrapVector
+                        // if(ROBcheck[(ROBhead+2) % 64][13] === 1'b1 || ((ROBhead+2) % 64===forwardA[21:16] && alu_value0B === 8'b00100001) || ((ROBhead+2) % 64 ===forwardB[21:16] && alu_value1B === 8'b00100001)) begin  // x21
+                        if(ROBcheck[(ROBhead+2) % 64][13] === 1'b1) begin
                             $write("%0c", cu_wdata2);
                         end
                         else begin  //x 25
                             halt <= 1'b1;
-                            // $finish();
                         end 
                     end
                     ROBhead <= (ROBhead + 3) % 64;
+                    // ROB[(ROBhead+2)%64][32] <= 1'b0;
                 end
             end
         end

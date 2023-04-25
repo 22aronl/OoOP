@@ -39,8 +39,10 @@ module reservation_station(input clk, input flush,
     assign outOperation = {operation[operationIndex][55:52], operation[operationIndex][51:46], operation[operationIndex][33:18], operation[operationIndex][17:2]};
 
     initial begin
-        for(i = 0; i < 5; i = i + 1)
+        for(i = 0; i < 5; i = i + 1) begin
             commited[i] <= 1'b0;
+            operation[i][56] <= 1'b0;
+        end
     end
 
     always @(posedge clk) begin
