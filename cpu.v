@@ -41,6 +41,8 @@ module main();
     wire [15:0] mem_raddr;
     wire [15:0] mem_rdata;
 
+    wire almost_full = (ROBhead-(ROBtail)+64)%64 <= 3 & (ROBheadcounter !== ROBtailcounter);
+
     mem mem(
         .clk(clk),
         .rinstruct0_(pcA[15:1]),
@@ -95,7 +97,6 @@ module main();
     reg ROBheadcounter = 1'b0;
     reg ROBtailcounter = 1'b0;
 
-    wire almost_full = (ROBhead-(ROBtail)+64)%64 <= 3 & (ROBheadcounter !== ROBtailcounter);
     wire flush; 
     regs regs(
         .clk(clk),
