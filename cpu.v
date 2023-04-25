@@ -76,11 +76,6 @@ module main();
     wire [5:0] wrob1 = cu_wrob1;
     wire [5:0] wrob2 = cu_wrob2;
 
-    //Negative, Zero, Positive
-    // [9:7] flags, [6] busy, [5:0] ROB index
-    reg [9:0] conditionCode;
-    // reg [7:0] conditionCodes[0:2];
-
     regs regs(
         .clk(clk),
         .flush(flush),
@@ -120,15 +115,15 @@ module main();
 
     reg [5:0] last_arith_ROB_idx;
 
+    // // // // //
+    // Decode 1 //
+    // // // // //
 
-    //decode 1
     reg [15:0]d1_pcA;
     reg [15:0]d1_pcB;
     reg [15:0]d1_pcC;
     reg [15:0]d1_pcD;
     reg d1_valid;
-
-    //TODO: Deal with Condition Codes pls
 
     wire [5:0] d1_tailA = ROBtail;
     wire [5:0] d1_tailB = (ROBtail + 1) % 64;
@@ -188,7 +183,6 @@ module main();
     wire [2:0] regA1 = is_strA ? instructA[8:6] : instructA[2:0];
 
 
-
     wire [3:0] opcodeB = instructB[15:12];
 
     wire is_addrB = (opcodeB === 4'b0001) & (instructB[5:3] === 3'b000);
@@ -236,13 +230,14 @@ module main();
     wire [2:0] writeRegB = instructB[11:9];
     wire is_storeB = is_stB | is_stiB | is_strB;
 
-    wire is_aluB = (opcodeB == 4'b0001) | (opcodeB == 4'b1010) | (opcodeB == 4'b1001); // ?????????? where is this used
     wire [2:0] regB0 = (is_storeB) ? writeRegB : 
                         is_trapB ? 0: instructB[8:6];
     wire [2:0] regB1 = is_strA ? instructB[8:6] : instructB[2:0];
 
 
-    // TODO rename 
+
+
+
     wire [3:0] opcodeC = instructC[15:12];
 
     wire is_addrC = (opcodeC === 4'b0001) & (instructC[5:3] === 3'b000);
@@ -297,7 +292,6 @@ module main();
 
 
 
-    // TODO rename 
     wire [3:0] opcodeD = instructD[15:12];
 
     wire is_addrD = (opcodeD === 4'b0001) & (instructD[5:3] === 3'b000);
@@ -346,7 +340,6 @@ module main();
     wire [2:0] writeRegD = instructD[11:9];
     wire is_storeD = is_stD | is_stiD | is_strD;
 
-    wire is_aluD = (opcodeD == 4'b0001) | (opcodeD == 4'b1010) | (opcodeD == 4'b1001);
     wire [2:0] regD0 = is_storeD ? writeRegD : is_trapD ? 0 :instructD[8:6];
     wire [2:0] regD1 = is_strD ? instructD[8:6] : instructD[2:0];
 
@@ -435,7 +428,6 @@ module main();
 
     reg [5:0] d2_tailA; //ROB
     reg [3:0] d2_opcodeA; //Operation
-    reg d2_is_aluA;
     reg [2:0] d2_regA0;
     reg [2:0] d2_regA1;
     reg [1:0] d2_useA_;
@@ -500,7 +492,6 @@ module main();
 
         d2_tailA <= d1_tailA;
         d2_opcodeA <= opcodeA;
-        d2_is_aluA <= is_aluA;
         d2_regA0 <= regA0;
         d2_regA1 <= regA1;
         d2_useA_ <= useA;
@@ -515,7 +506,6 @@ module main();
     reg [2:0] d2_writeRegB;
 
     reg [3:0] d2_opcodeB; //Operation
-    reg d2_is_aluB;
     reg [2:0] d2_regB0;
     reg [2:0] d2_regB1;
     reg [1:0] d2_useB_;
@@ -551,7 +541,6 @@ module main();
                                 d2_rdataB1[22:7];
     
     wire [1:0] d2_useB = {d2_useB_[1] & ((ROB[d2_lookB0][32] == 1'b0 & d2_rdataB0[6] == 1'b1)|d2_lookB0_), d2_useB_[0] & ((ROB[d2_lookB1][32] == 1'b0 & d2_rdataB1[6] == 1'b1)|d2_lookB1_)};
-    //TODO: Update ROBcheck with the computed values ehre too
 
     wire [55:0] d2_outputB_ = {d2_opcodeB, d2_tailB, d2_lookB0, d2_lookB1, d2_valueB0, d2_valueB1, d2_useB};
 
@@ -565,7 +554,7 @@ module main();
     wire [56:0] d2_outputB = {d2_outputB2, d2_instructB[19]};
 
 
-        // [22:7]data, [6] busy, [5:0] rob_loc
+    // [22:7]data, [6] busy, [5:0] rob_loc
     always @(posedge clk) begin
         d2_instructB <= d1_instructB;
         d2_is_ldunitB <= is_ldunitB;
@@ -576,7 +565,6 @@ module main();
         d2_offset6B <= offset6B;
         d2_writeToRegB <= writeToRegB;
         d2_writeRegB <= writeRegB;
-        d2_is_aluB <= is_aluB;
         d2_regB0 <= regB0;
         d2_regB1 <= regB1;
         d2_tailB <= d1_tailB;
@@ -591,7 +579,6 @@ module main();
     reg [15:0] d2_offset6C;
     reg d2_writeToRegC;
     reg [2:0] d2_writeRegC;
-    reg d2_is_aluC;
     reg [2:0] d2_regC0;
     reg [2:0] d2_regC1;
     reg [5:0] d2_tailC; //ROB
@@ -621,7 +608,6 @@ module main();
                 d2_writeToRegB && (d2_writeRegB == d2_regC1) ? d2_tailB : 
                 d2_writeToRegA && (d2_writeRegA == d2_regC1) ? d2_tailA : d2_rdataC1[5:0];
 
-                //TODO: WHY??
 
 
     wire [15:0] d2_valueC0 = (d2_instructC[12] | d2_instructC[14] | d2_instructC[10] | d2_instructC[9] | d2_instructC[7]) ? d2_pcC :
@@ -638,7 +624,6 @@ module main();
     
     wire [1:0] d2_useC = {d2_useC_[1] &((ROB[d2_lookC0][32] == 1'b0 & d2_rdataC0[6] == 1'b1)|d2_lookC0_), 
                         d2_useC_[0] & ((ROB[d2_lookC1][32] == 1'b0 & d2_rdataC1[6] == 1'b1)|d2_lookC1_)};
-    //TODO: Update ROBcheck with the computed values ehre too
 
     wire [55:0] d2_outputC_ = {d2_opcodeC, d2_tailC, d2_lookC0, d2_lookC1, d2_valueC0, d2_valueC1, d2_useC};
 
@@ -669,7 +654,6 @@ module main();
         d2_is_brC <= is_brC;
         d2_is_brD <= is_brD;
 
-        d2_is_aluC <= is_aluC;
         d2_regC0 <= regC0;
         d2_regC1 <= regC1;
         d2_tailC <= d1_tailC;
@@ -687,7 +671,6 @@ module main();
 
     reg [5:0] d2_tailD; //ROB
     reg [3:0] d2_opcodeD; //Operation
-    reg d2_is_aluD;
     reg [2:0] d2_regD0;
     reg [2:0] d2_regD1;
     reg [1:0] d2_useD_;
@@ -731,7 +714,7 @@ module main();
                                 d2_rdataD1[22:7];
     wire [1:0] d2_useD = {d2_useD_[1] & (ROB[d2_lookD0][32] == 1'b0 & d2_rdataD0[6] == 1'b1 | d2_lookD0_), 
                             d2_useD_[0] & (ROB[d2_lookD1][32] == 1'b0 & d2_rdataD1[6] == 1'b1 | d2_lookD1_)};
-    //TODO: Update ROBcheck with the computed values ehre too
+
     //[56:53] opcode, [52:47] tail, [46:41] look0,
     wire [55:0] d2_outputD_ = {d2_opcodeD, d2_tailD, d2_lookD0, d2_lookD1, d2_valueD0, d2_valueD1, d2_useD};
 
@@ -757,7 +740,6 @@ module main();
         d2_writeToRegD <= writeToRegD;
         d2_writeRegD <= writeRegD;
 
-        d2_is_aluD <= is_aluD;
         d2_regD0 <= regD0;
         d2_regD1 <= regD1;
         d2_tailD <= d1_tailD;
@@ -902,7 +884,6 @@ module main();
     wire [5:0] alu_queue_lookD1 = alu_queue_out1[39:34];
     wire [1:0] alu_queue_useD = alu_queue_out1[1:0];
 
-    //TODO: Add support for ordering these instructions in
     queue alu_queue(
         .clk(clk),
         .flush(),
@@ -1011,7 +992,6 @@ module main();
     assign forwardA = {alu_valid0, alu_rob0, alu_out0};
 
     always @(posedge clk) begin
-        //TODO: link functional unit A to instruction queue
         alu_valid0 <= alu_rs_0_valid;
         alu_opcode0 <= alu_rs_0_out[41:38];
         alu_rob0 <= alu_rs_0_out[37:32];
@@ -1298,7 +1278,6 @@ module main();
             if((ROB[(ROBhead+1) % 64][32] === 1'b1) && ROBcheck[ROBhead][12]!==1'b1) begin
                 
                 if(ROBcheck[(ROBhead+1) % 64][5] === 1'b1) begin //IsTrapVectorf021
-                    // if((ROBcheck[(ROBhead+1) % 64][13] === 1'b1 && ((ROBhead+1) % 64)!==forwardA[21:16] && ((ROBhead+1) % 64))!==forwardB[21:16]|| ((ROBhead+1)%64===forwardA[21:16] && alu_value0B === 8'b00100001) || ((ROBhead+1)%64 ===forwardB[21:16] && alu_value1B === 8'b00100001)) begin  // x21
                     if(ROBcheck[(ROBhead+1) % 64][13] === 1'b1) begin
                         $write("%0c", cu_wdata1[7:0]);
                     end
@@ -1307,12 +1286,10 @@ module main();
                     end
                 end
                 ROBhead <= (ROBhead + 2) % 64;
-                // ROB[(ROBhead + 1)%64][32] <= 1'b0;
                 // Commit 2
                 if((ROB[(ROBhead+2) % 64][32] === 1'b1) && (ROBcheck[ROBhead][12] !== 1'b1) && (ROBcheck[(ROBhead + 1) % 64][12] !== 1'b1)) begin
                     
                     if(ROBcheck[(ROBhead+2)%64][5] === 1'b1) begin //IsTrapVector
-                        // if(ROBcheck[(ROBhead+2) % 64][13] === 1'b1 || ((ROBhead+2) % 64===forwardA[21:16] && alu_value0B === 8'b00100001) || ((ROBhead+2) % 64 ===forwardB[21:16] && alu_value1B === 8'b00100001)) begin  // x21
                         if(ROBcheck[(ROBhead+2) % 64][13] === 1'b1) begin
                             $write("%0c", cu_wdata2);
                         end
@@ -1321,7 +1298,6 @@ module main();
                         end 
                     end
                     ROBhead <= (ROBhead + 3) % 64;
-                    // ROB[(ROBhead+2)%64][32] <= 1'b0;
                 end
             end
         end

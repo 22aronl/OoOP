@@ -1,11 +1,11 @@
 @0
-// test jsr
+// test jmp
 102F // 0
 102F 
 102F
 102F
 1025 // put A into r0
-0202 // jsr to print (uses incremented pc)
+0202 // jmp to print (uses incremented pc)
 102F // skip these two
 102F
 F021 // print //10
